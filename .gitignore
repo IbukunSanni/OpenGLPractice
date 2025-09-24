@@ -361,3 +361,33 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Custom temporary files
+current_dir.txt
+temp/
+tmp/
+
+# OpenGL specific files
+*.exe
+*.tlog
+*.idb
+*.lastbuildstate
+
+# Project specific build configurations
+# (Keep the main configuration files but ignore build artifacts)
+TriangleAnimation/
+NewExperiment/
+
+# Editor backups
+*~
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
