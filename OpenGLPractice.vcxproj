@@ -17,6 +17,14 @@
       <Configuration>Release</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
+    <ProjectConfiguration Include="TriangleAnimation|x64">
+      <Configuration>TriangleAnimation</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="NewExperiment|x64">
+      <Configuration>NewExperiment</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
@@ -52,6 +60,18 @@
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='TriangleAnimation|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='NewExperiment|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
@@ -75,6 +95,14 @@
     <LibraryPath>C:\Users\Ibukunoluwa\Documents\Coding\C-C++\OpenGL-VSstudio\OpenGLPractice\Libraries\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>C:\Users\Ibukunoluwa\Documents\Coding\C-C++\OpenGL-VSstudio\OpenGLPractice\Libraries\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\Ibukunoluwa\Documents\Coding\C-C++\OpenGL-VSstudio\OpenGLPractice\Libraries\lib;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='TriangleAnimation|x64'">
+    <IncludePath>C:\Users\Ibukunoluwa\Documents\Coding\C-C++\OpenGL-VSstudio\OpenGLPractice\Libraries\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\Ibukunoluwa\Documents\Coding\C-C++\OpenGL-VSstudio\OpenGLPractice\Libraries\lib;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='NewExperiment|x64'">
     <IncludePath>C:\Users\Ibukunoluwa\Documents\Coding\C-C++\OpenGL-VSstudio\OpenGLPractice\Libraries\include;$(IncludePath)</IncludePath>
     <LibraryPath>C:\Users\Ibukunoluwa\Documents\Coding\C-C++\OpenGL-VSstudio\OpenGLPractice\Libraries\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
@@ -136,13 +164,45 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='TriangleAnimation|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>glfw3.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='NewExperiment|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>glfw3.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="EBO.cpp" />
     <ClCompile Include="glad.c" />
-    <ClCompile Include="Main.cpp" />
+    <ClCompile Include="projects\Intro\Main.cpp" />
     <ClCompile Include="shaderClass.cpp" />
     <ClCompile Include="VAO.cpp" />
     <ClCompile Include="VBO.cpp" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(Configuration)'=='TriangleAnimation'">
+    <ClCompile Include="projects\triangle-animation\main.cpp" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(Configuration)'=='NewExperiment'">
+    <ClCompile Include="projects\new-experiment\main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="default.frag" />
