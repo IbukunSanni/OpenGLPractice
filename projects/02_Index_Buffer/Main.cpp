@@ -1,23 +1,16 @@
-// Standard I/O for logging
 #include <iostream>
-// GLAD: loads modern OpenGL function pointers
 #include <glad/glad.h>
-// GLFW: window/context creation and input
 #include <GLFW/glfw3.h>
-// cmath: for sqrt used in vertex positions
 #include <cmath>
 
 // Vertex Shader source code
-// GLSL version 330 core targets OpenGL 3.3 (matches our window hints).
-// The shader source is provided as a C-string with an explicit null terminator ("\0").
 const char* vertexShaderSource = "#version 330 core\n"
 "layout (location = 0) in vec3 aPos;\n"
 "void main()\n"
 "{\n"
 "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
 "}\0";
-// Fragment Shader source code
-// Outputs a constant color to FragColor for the entire triangle.
+//Fragment Shader source code
 const char* fragmentShaderSource = "#version 330 core\n"
 "out vec4 FragColor;\n"
 "void main()\n"
@@ -53,11 +46,9 @@ int main()
 	// Introduce the window into the current context
 	glfwMakeContextCurrent(window);
 
-	// Load GLAD so it configures OpenGL function pointers.
-	// Note: Ensure GLAD is initialized after creating a valid OpenGL context.
+	// Load GLAD so it configures OpenGL
 	gladLoadGL();
-	// Specify the initial viewport to cover the whole window (x, y, width, height).
-	// Tip: you can update this on window resize with a framebuffer size callback.
+	// Specify the viewport of OpenGL in the Window (1920x1080)
 	glViewport(0, 0, 1920, 1080);
 
 	// Create Vertex Shader Object and get its reference
@@ -65,7 +56,6 @@ int main()
 	// Attach Vertex Shader source to the Vertex Shader Object
 	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
 	// Compile the Vertex Shader into machine code
-	// In production code, you would query and log GL_COMPILE_STATUS here.
 	glCompileShader(vertexShader);
 
 	// Create Fragment Shader Object and get its reference
@@ -73,7 +63,6 @@ int main()
 	// Attach Fragment Shader source to the Fragment Shader Object
 	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
 	// Compile the Fragment Shader into machine code
-	// In production code, you would query and log GL_COMPILE_STATUS here as well.
 	glCompileShader(fragmentShader);
 
 	// Create Shader Program Object and get its reference
@@ -82,7 +71,6 @@ int main()
 	glAttachShader(shaderProgram, vertexShader);
 	glAttachShader(shaderProgram, fragmentShader);
 	// Wrap-up/Link all the shaders together into the Shader Program
-	// In production code, you would query GL_LINK_STATUS and log link errors.
 	glLinkProgram(shaderProgram);
 
 	// Delete the now useless Vertex and Fragment Shader objects
@@ -114,15 +102,9 @@ int main()
 	// Introduce the vertices into the VBO
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-	// Configure the vertex attribute so that OpenGL knows how to read the VBO:
-	// index = 0            -> matches 'layout(location = 0)' in the vertex shader
-	// size = 3             -> 3 components per vertex attribute (x, y, z)
-	// type = GL_FLOAT      -> data type of each component
-	// normalized = GL_FALSE-> do not normalize
-	// stride = 3*sizeof(float) -> byte offset between consecutive vertices
-	// pointer = (void*)0   -> offset of the first component in the buffer
+	// Configure the Vertex Attribute so that OpenGL knows how to read the VBO
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-	// Enable the vertex attribute array at index 0
+	// Enable the Vertex Attribute so that OpenGL knows to use it
 	glEnableVertexAttribArray(0);
 
 	// Bind both the VBO and VAO to 0 so that we don't accidentally modify the VAO and VBO we created
@@ -137,29 +119,29 @@ int main()
 			glfwSetWindowShouldClose(window, true);
 		}
 
-		// Specify the color of the background (clear color)
+		// Specify the color of the background
 		glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
-		// Clear the color buffer with the specified clear color
+		// Clean the back buffer and assign the new color to it
 		glClear(GL_COLOR_BUFFER_BIT);
-		// Use our shader program for subsequent draw calls
+		// Tell OpenGL which Shader Program we want to use
 		glUseProgram(shaderProgram);
-		// Bind the VAO describing our vertex input configuration
+		// Bind the VAO so OpenGL knows to use it
 		glBindVertexArray(VAO);
-		// Issue a draw call: 3 vertices form one triangle starting at index 0
+		// Draw the triangle using the GL_TRIANGLES primitive
 		glDrawArrays(GL_TRIANGLES, 0, 3);
-		// Present the rendered image by swapping the back and front buffers
+		// Swap the back buffer with the front buffer
 		glfwSwapBuffers(window);
 		// Take care of all GLFW events
 		glfwPollEvents();
 	}
 
-	// Delete all the GL objects we've created to free GPU resources
+	// Delete all the objects we've created
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);
 	glDeleteProgram(shaderProgram);
-	// Destroy the window and context before exiting
+	// Delete window before ending the program
 	glfwDestroyWindow(window);
-	// Terminate GLFW to clean up allocated resources
+	// Terminate GLFW before ending the program
 	glfwTerminate();
 	return 0;
 }
