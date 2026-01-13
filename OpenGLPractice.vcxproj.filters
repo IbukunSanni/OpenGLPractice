@@ -33,7 +33,7 @@
     <ClCompile Include="EBO.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="projects\01_Triangle\Main.cpp">
+    <ClCompile Include="projects\02_Index_Buffer\Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

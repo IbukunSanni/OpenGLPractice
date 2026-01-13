@@ -193,7 +193,7 @@
   <ItemGroup>
     <ClCompile Include="EBO.cpp" />
     <ClCompile Include="glad.c" />
-    <ClCompile Include="projects\01_Triangle\Main.cpp" />
+    <ClCompile Include="projects\02_Index_Buffer\Main.cpp" />
     <ClCompile Include="shaderClass.cpp" />
     <ClCompile Include="VAO.cpp" />
     <ClCompile Include="VBO.cpp" />
