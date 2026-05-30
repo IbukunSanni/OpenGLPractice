@@ -1,13 +1,7 @@
 #version 330 core
-out vec4 FragColor;
 
-in vec3 color;
-uniform float scale;
+out vec4 FragColor;
 void main()
 {
-   FragColor = vec4((1.0f -color.x) * scale,
-					(1.0f -color.y) * scale,
-					(1.0f -color.z) * scale,
-					1.0f
-					);
+	FragColor = vec4(0.8f, 0.3f, 0.02f, 1.0f);
 }
