@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup>
+	<PlatformToolset Condition="'$(MSBuildVersion)' >= '18.0'">v145</PlatformToolset>
+	<PlatformToolset Condition="'$(MSBuildVersion)' &lt; '18.0'">v143</PlatformToolset>
+  </PropertyGroup>
+</Project>

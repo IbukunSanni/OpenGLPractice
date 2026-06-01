@@ -33,7 +33,10 @@
     <ClCompile Include="EBO.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="projects\02_Index_Buffer\Main.cpp">
+    <ClCompile Include="Main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="stb.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -44,6 +47,7 @@
     <None Include="default.frag">
       <Filter>Resource Files\Shaders</Filter>
     </None>
+    <None Include="Directory.Build.props" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="shaderClass.h">
