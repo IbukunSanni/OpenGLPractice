@@ -2,10 +2,10 @@
 #include<glad/glad.h>
 #include<GLFW/glfw3.h>
 
-#include"../shaderClass.h"
-#include"../VAO.h"
-#include"../VBO.h"
-#include"../EBO.h"
+#include"shaderClass.h"
+#include"VAO.h"
+#include"VBO.h"
+#include"EBO.h"
 
 // TODO: Add your vertices here
 GLfloat vertices[] = {

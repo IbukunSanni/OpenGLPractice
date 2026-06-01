@@ -1,31 +1,66 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.8.34511.84
+# Visual Studio Version 18
+VisualStudioVersion = 18.6.11822.322 stable
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OpenGLPractice", "OpenGLPractice.vcxproj", "{733102A9-8303-4DB7-8803-3D387A9F521E}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "projects", "projects", "{E0000000-0000-0000-0000-000000000000}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "00_Window", "projects\00_Window\00_Window.vcxproj", "{A0000000-0000-0000-0000-000000000000}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "01_Triangle", "projects\01_Triangle\01_Triangle.vcxproj", "{A1000000-0000-0000-0000-000000000001}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "02_Index_Buffer", "projects\02_Index_Buffer\02_Index_Buffer.vcxproj", "{A2000000-0000-0000-0000-000000000002}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "05_Shaders", "projects\05_Shaders\05_Shaders.vcxproj", "{A5000000-0000-0000-0000-000000000005}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "06_Textures", "projects\06_Textures\06_Textures.vcxproj", "{A6000000-0000-0000-0000-000000000006}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "triangle-animation", "projects\triangle-animation\triangle-animation.vcxproj", "{B0000000-0000-0000-0000-000000000007}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "new-experiment", "projects\new-experiment\new-experiment.vcxproj", "{B1000000-0000-0000-0000-000000000008}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "texture_test", "projects\texture_test\texture_test.vcxproj", "{A6000000-0000-0000-0000-000000000099}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
-		Debug|x86 = Debug|x86
 		Release|x64 = Release|x64
-		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{733102A9-8303-4DB7-8803-3D387A9F521E}.Debug|x64.ActiveCfg = Debug|x64
-		{733102A9-8303-4DB7-8803-3D387A9F521E}.Debug|x64.Build.0 = Debug|x64
-		{733102A9-8303-4DB7-8803-3D387A9F521E}.Debug|x86.ActiveCfg = Debug|Win32
-		{733102A9-8303-4DB7-8803-3D387A9F521E}.Debug|x86.Build.0 = Debug|Win32
-		{733102A9-8303-4DB7-8803-3D387A9F521E}.Release|x64.ActiveCfg = Release|x64
-		{733102A9-8303-4DB7-8803-3D387A9F521E}.Release|x64.Build.0 = Release|x64
-		{733102A9-8303-4DB7-8803-3D387A9F521E}.Release|x86.ActiveCfg = Release|Win32
-		{733102A9-8303-4DB7-8803-3D387A9F521E}.Release|x86.Build.0 = Release|Win32
+		{A0000000-0000-0000-0000-000000000000}.Debug|x64.ActiveCfg = Debug|x64
+		{A0000000-0000-0000-0000-000000000000}.Debug|x64.Build.0 = Debug|x64
+		{A0000000-0000-0000-0000-000000000000}.Release|x64.ActiveCfg = Release|x64
+		{A0000000-0000-0000-0000-000000000000}.Release|x64.Build.0 = Release|x64
+		{A1000000-0000-0000-0000-000000000001}.Debug|x64.ActiveCfg = Debug|x64
+		{A1000000-0000-0000-0000-000000000001}.Debug|x64.Build.0 = Debug|x64
+		{A1000000-0000-0000-0000-000000000001}.Release|x64.ActiveCfg = Release|x64
+		{A1000000-0000-0000-0000-000000000001}.Release|x64.Build.0 = Release|x64
+		{A2000000-0000-0000-0000-000000000002}.Debug|x64.ActiveCfg = Debug|x64
+		{A2000000-0000-0000-0000-000000000002}.Debug|x64.Build.0 = Debug|x64
+		{A2000000-0000-0000-0000-000000000002}.Release|x64.ActiveCfg = Release|x64
+		{A2000000-0000-0000-0000-000000000002}.Release|x64.Build.0 = Release|x64
+		{A5000000-0000-0000-0000-000000000005}.Debug|x64.ActiveCfg = Debug|x64
+		{A5000000-0000-0000-0000-000000000005}.Debug|x64.Build.0 = Debug|x64
+		{A5000000-0000-0000-0000-000000000005}.Release|x64.ActiveCfg = Release|x64
+		{A5000000-0000-0000-0000-000000000005}.Release|x64.Build.0 = Release|x64
+		{A6000000-0000-0000-0000-000000000006}.Debug|x64.ActiveCfg = Debug|x64
+		{A6000000-0000-0000-0000-000000000006}.Debug|x64.Build.0 = Debug|x64
+		{A6000000-0000-0000-0000-000000000006}.Release|x64.ActiveCfg = Release|x64
+		{A6000000-0000-0000-0000-000000000006}.Release|x64.Build.0 = Release|x64
+		{B0000000-0000-0000-0000-000000000007}.Debug|x64.ActiveCfg = Debug|x64
+		{B0000000-0000-0000-0000-000000000007}.Debug|x64.Build.0 = Debug|x64
+		{B0000000-0000-0000-0000-000000000007}.Release|x64.ActiveCfg = Release|x64
+		{B0000000-0000-0000-0000-000000000007}.Release|x64.Build.0 = Release|x64
+		{B1000000-0000-0000-0000-000000000008}.Debug|x64.ActiveCfg = Debug|x64
+		{B1000000-0000-0000-0000-000000000008}.Debug|x64.Build.0 = Debug|x64
+		{B1000000-0000-0000-0000-000000000008}.Release|x64.ActiveCfg = Release|x64
+		{B1000000-0000-0000-0000-000000000008}.Release|x64.Build.0 = Release|x64
+		{A6000000-0000-0000-0000-000000000099}.Debug|x64.ActiveCfg = Debug|x64
+		{A6000000-0000-0000-0000-000000000099}.Debug|x64.Build.0 = Debug|x64
+		{A6000000-0000-0000-0000-000000000099}.Release|x64.ActiveCfg = Release|x64
+		{A6000000-0000-0000-0000-000000000099}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {D47EB44C-8DF5-4CD0-BC40-A7F66482BF93}
 	EndGlobalSection
 EndGlobal

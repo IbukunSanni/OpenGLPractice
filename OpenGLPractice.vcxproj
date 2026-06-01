@@ -213,6 +213,13 @@
     <None Include="default.frag" />
     <None Include="default.vert" />
     <None Include="Directory.Build.props" />
+    <None Include="projects\00_Window\00_Window.vcxproj" />
+    <None Include="projects\01_Triangle\01_Triangle.vcxproj" />
+    <None Include="projects\02_Index_Buffer\02_Index_Buffer.vcxproj" />
+    <None Include="projects\05_Shaders\05_Shaders.vcxproj" />
+    <None Include="projects\06_Textures\06_Textures.vcxproj" />
+    <None Include="projects\new-experiment\new-experiment.vcxproj" />
+    <None Include="projects\triangle-animation\triangle-animation.vcxproj" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EBO.h" />
