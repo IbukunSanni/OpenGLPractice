@@ -7,14 +7,14 @@
 #include"VBO.h"
 #include"EBO.h"
 
-// TODO: Add your vertices here
 GLfloat vertices[] = {
-    // Add your vertex data
+    -0.5f, -0.5f, 0.0f,
+     0.5f, -0.5f, 0.0f,
+     0.0f,  0.5f, 0.0f
 };
 
-// TODO: Add your indices here  
 GLuint indices[] = {
-    // Add your index data
+    0, 1, 2
 };
 
 int main()

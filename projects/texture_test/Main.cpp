@@ -74,7 +74,7 @@ int main()
 	// A shader program tells the GPU how to process and display your geometry.
 	// "default.vert" (vertex shader) positions each vertex on screen.
 	// "default.frag" (fragment shader) determines the color of each pixel.
-	Shader shaderProgram("default.vert", "default.frag");
+	Shader shaderProgram("projects/texture_test/default.vert", "projects/texture_test/default.frag");
 
 
 
@@ -114,7 +114,7 @@ int main()
 	// Images are stored top-to-bottom, but OpenGL expects bottom-to-top.
 	// This flips the image so it appears right-side up.
 	stbi_set_flip_vertically_on_load(true);
-	unsigned char* bytes = stbi_load("green_plane.jpg", &widthImg, &heightImg, &numColCh, 0);
+	unsigned char* bytes = stbi_load("projects/texture_test/green_plane.jpg", &widthImg, &heightImg, &numColCh, 0);
 
 	// Create a texture object on the GPU and bind it so we can configure it.
 	// GL_TEXTURE0 is the first texture slot — shaders can sample from multiple slots.

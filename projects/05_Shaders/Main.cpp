@@ -64,7 +64,7 @@ int main()
 
 
 	// Generates Shader object using shaders defualt.vert and default.frag
-	Shader shaderProgram("default.vert", "default.frag");
+	Shader shaderProgram("projects/05_Shaders/default.vert", "projects/05_Shaders/default.frag");
 
 
 
@@ -105,9 +105,6 @@ int main()
 		glUniform1f(uniID, 0.5f);
 		VAO1.Bind();
 
-		glDrawElements(GL_TRIANGLES, 9)
-		
-		
 		// Assigns a value to the uniform;
 		// NOTE: Must always be done after activating the Shader Program
 		float time = float(glfwGetTime());

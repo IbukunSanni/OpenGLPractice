@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="Main.cpp" />
+    <ClCompile Include="..\..\glad.c" />
+    <ClCompile Include="..\..\shaderClass.cpp" />
+    <ClCompile Include="..\..\VAO.cpp" />
+    <ClCompile Include="..\..\VBO.cpp" />
+    <ClCompile Include="..\..\EBO.cpp" />
+    <ClCompile Include="..\..\stb.cpp" />
+    <ClCompile Include="Texture.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\shaderClass.h" />
+    <ClInclude Include="..\..\VAO.h" />
+    <ClInclude Include="..\..\VBO.h" />
+    <ClInclude Include="..\..\EBO.h" />
+    <ClInclude Include="Texture.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="default.frag">
+      <Filter>Resources\Shaders</Filter>
+    </None>
+    <None Include="default.vert">
+      <Filter>Resources\Shaders</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Resources">
+      <UniqueIdentifier>{e1e08074-40d9-41de-b445-117d7c9d1f1a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Shaders">
+      <UniqueIdentifier>{02d8d832-2737-49f8-bb37-c6d95293478e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Textures">
+      <UniqueIdentifier>{02429a19-b902-4d62-a16d-e0b2e873904e}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\..\..\..\Downloads\vector-fiery-green-hairs-background\green_plane.jpg">
+      <Filter>Resources\Textures</Filter>
+    </Image>
+  </ItemGroup>
+</Project>

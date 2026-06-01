@@ -64,7 +64,7 @@ int main()
 
 
 	// Generates Shader object using shaders defualt.vert and default.frag
-	Shader shaderProgram("default.vert", "default.frag");
+	Shader shaderProgram("projects/triangle-animation/default.vert", "projects/triangle-animation/default.frag");
 
 
 
