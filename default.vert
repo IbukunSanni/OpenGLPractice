@@ -6,8 +6,15 @@ layout (location = 0) in vec3 aPos;
 // Color attribute from vertex data (location 1)
 layout (location = 1) in vec3 aColor;
 
-// Output color passed to the fragment shader
+// Texture coordinate attribute from vertex data (location 2)
+// These 2D coordinates (u, v) tell the fragment shader which part of an image to sample
+layout (location = 2) in vec2 aTex;
+
+// Pass the color to the fragment shader so it can determine each pixel's color
 out vec3 color;
+
+// Pass the texture coordinate to the fragment shader for image mapping
+out vec2 texCoord;
 
 // Scale uniform - controls how much the geometry is scaled
 uniform float scale;
@@ -16,7 +23,8 @@ void main()
 {
 	// Outputs the positions/coordinates of all vertices
 	// Applies scale uniformly to x, y, and z axes
-	gl_Position = vec4(aPos.x + aPos.x * scale, aPos.y + aPos.y * scale, aPos.z + aPos.z * scale, 1.0);
-	// Assigns the colors from the Vertex Data to "color"
+	gl_Position = vec4(aPos * scale, 1.0);
+	// Forward the per-vertex color and texture coordinate to the fragment shader
 	color = aColor;
+	texCoord = aTex;
 }
