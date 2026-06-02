@@ -1,63 +1,65 @@
-#include<iostream>
-#include<exception>
-#include<glad/glad.h>
-#include<GLFW/glfw3.h>
-#include<stb/stb_image.h>
-#include<glm/glm.hpp>
-#include<glm/gtc/matrix_transform.hpp>
-#include<glm/gtc/type_ptr.hpp>
+#include <iostream>
+#include <exception>
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+#include <stb/stb_image.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
-#include"Texture.h"
-#include"shaderClass.h"
-#include"VAO.h"
-#include"VBO.h"
-#include"EBO.h"
+#include "Texture.h"
+#include "shaderClass.h"
+#include "VAO.h"
+#include "VBO.h"
+#include "EBO.h"
 
-const unsigned int width;
-const unsigned int height;
+const unsigned int width  = 800;
+const unsigned int height = 800;
 
-
-
-// Vertices coordinates
+// A square base pyramid with 5 vertices.
+// Each vertex: X, Y, Z,  R, G, B,  U, V
+// Base sits on Y=0; apex at Y=0.8 in the centre.
+// UV coordinates are stretched (U up to 5) so the brick texture tiles across the faces.
 GLfloat vertices[] =
-{ //     COORDINATES     /        COLORS      /   TexCoord  //
-	-0.5f, -0.5f, 0.0f,     1.0f, 0.0f, 0.0f,    -0.5f, -0.5f, // Lower left corner
-	 0.0f,  0.5f, 0.0f,     0.0f, 1.0f, 0.0f,     0.5f,  2.0f, // Upper corner
-	 0.5f, -0.5f, 0.0f,     1.0f, 1.0f, 1.0f,     1.5f, -0.5f  // Lower right corner
+{ //     COORDINATES     /        COLORS          /  TexCoord  //
+	-0.5f, 0.0f,  0.5f,     0.83f, 0.70f, 0.44f,   0.0f, 0.0f, // Front left
+	-0.5f, 0.0f, -0.5f,     0.83f, 0.70f, 0.44f,   5.0f, 0.0f, // Back  left
+	 0.5f, 0.0f, -0.5f,     0.83f, 0.70f, 0.44f,   0.0f, 0.0f, // Back  right
+	 0.5f, 0.0f,  0.5f,     0.83f, 0.70f, 0.44f,   5.0f, 0.0f, // Front right
+	 0.0f, 0.8f,  0.0f,     0.92f, 0.86f, 0.76f,   2.5f, 5.0f  // Apex
 };
 
-// Indices for vertices order
+// Two triangles form the square base; four triangles form the side faces.
 GLuint indices[] =
 {
-	0, 2, 1 // Triangle
+	0, 1, 2, // Base  triangle 1
+	0, 2, 3, // Base  triangle 2
+	0, 1, 4, // Left  face
+	1, 2, 4, // Back  face
+	2, 3, 4, // Right face
+	3, 0, 4  // Front face
 };
 
 int main()
 {
-	// Initialize GLFW
+	// ── GLFW initialisation ────────────────────────────────────────────────
 	glfwInit();
 
-	// Tell GLFW what version of OpenGL we are using 
-	// In this case we are using OpenGL 3.3
+	// Request an OpenGL 3.3 Core Profile context (no legacy/deprecated features)
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	// Tell GLFW we are using the CORE profile
-	// So that means we only have the modern functions
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	// Create a GLFWwindow object of 800 by 800 pixels, naming it "YoutubeOpenGL"
-	GLFWwindow* window = glfwCreateWindow(800, 800, "YoutubeOpenGL", NULL, NULL);
-	// Error check if the window fails to create
+	GLFWwindow* window = glfwCreateWindow(width, height, "YoutubeOpenGL", NULL, NULL);
 	if (window == NULL)
 	{
 		std::cout << "Failed to create GLFW window" << std::endl;
 		glfwTerminate();
 		return -1;
 	}
-	// Introduce the window into the current context
 	glfwMakeContextCurrent(window);
 
-	//Load GLAD so it configures OpenGL
+	// ── GLAD — load OpenGL function pointers ──────────────────────────────
 	if (!gladLoadGL())
 	{
 		std::cout << "Failed to initialize GLAD" << std::endl;
@@ -65,108 +67,111 @@ int main()
 		glfwTerminate();
 		return -1;
 	}
-	// Specify the viewport of OpenGL in the Window
-	// In this case the viewport goes from x = 0, y = 0, to x = 800, y = 800
-	glViewport(0, 0, 800, 800);
 
-	try
+	// Map the OpenGL viewport to the full window
+	glViewport(0, 0, width, height);
+
+	// ── Shader programme ──────────────────────────────────────────────────
+	// Compiles default.vert and default.frag, links them into a single programme
+	Shader shaderProgram("default.vert", "default.frag");
+
+	// ── GPU buffer setup ──────────────────────────────────────────────────
+	// The VAO records all attribute layout / buffer binding calls made while it is bound.
+	// Rebinding it later restores the full vertex format automatically.
+	VAO VAO1;
+	VAO1.Bind();
+
+	VBO VBO1(vertices, sizeof(vertices)); // Upload vertex data to the GPU
+	EBO EBO1(indices,  sizeof(indices));  // Upload index data to the GPU
+
+	// Tell the VAO how to interpret the raw bytes in VBO1:
+	//   attrib 0 → 3 floats (position),  stride = 8 floats, offset = 0
+	//   attrib 1 → 3 floats (color),     stride = 8 floats, offset = 3 floats
+	//   attrib 2 → 2 floats (UV),        stride = 8 floats, offset = 6 floats
+	VAO1.LinkAttrib(VBO1, 0, 3, GL_FLOAT, 8 * sizeof(float), (void*)0);
+	VAO1.LinkAttrib(VBO1, 1, 3, GL_FLOAT, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+	VAO1.LinkAttrib(VBO1, 2, 2, GL_FLOAT, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+
+	// Unbind to avoid accidental modification after setup
+	VAO1.Unbind();
+	VBO1.Unbind();
+	EBO1.Unbind();
+
+	// Cache the uniform location for the scale value (queried once, reused every frame)
+	GLuint uniID = glGetUniformLocation(shaderProgram.ID, "scale");
+
+	// ── Texture ───────────────────────────────────────────────────────────
+	// Loads the image, uploads it to texture unit 0, and binds the sampler uniform "tex0"
+	Texture brickTex("Assets/Textures/green_plane.jpg", GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
+	brickTex.texUnit(shaderProgram, "tex0", 0);
+
+	// ── Rotation state ────────────────────────────────────────────────────
+	float  rotation = 0.0f;
+	double prevTime = glfwGetTime();
+
+	// Depth testing ensures back faces do not overdraw front faces
+	glEnable(GL_DEPTH_TEST);
+
+	// ── Render loop ───────────────────────────────────────────────────────
+	while (!glfwWindowShouldClose(window))
 	{
+		// Clear colour and depth buffers at the start of each frame
+		glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		shaderProgram.Activate();
 
-		// Generates Shader object using shaders default.vert and default.frag
-		Shader shaderProgram("default.vert", "default.frag");
-
-
-
-		// Generates Vertex Array Object and binds it
-		VAO VAO1;
-		VAO1.Bind();
-
-		// Generates Vertex Buffer Object and links it to vertices
-		VBO VBO1(vertices, sizeof(vertices));
-		// Generates Element Buffer Object and links it to indices
-		EBO EBO1(indices, sizeof(indices));
-
-		// Links VBO attributes such as coordinates and colors to VAO
-		VAO1.LinkAttrib(VBO1, 0, 3, GL_FLOAT, 8 * sizeof(float), (void*)0);
-		VAO1.LinkAttrib(VBO1, 1, 3, GL_FLOAT, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-		VAO1.LinkAttrib(VBO1, 2, 2, GL_FLOAT, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-		// Unbind all to prevent accidentally modifying them
-		VAO1.Unbind();
-		VBO1.Unbind();
-		EBO1.Unbind();
-
-		// Gets ID of uniform called "scale"
-		GLuint uniID = glGetUniformLocation(shaderProgram.ID, "scale");
-
-
-
-		// Texture
-		Texture popCat("Assets/Textures/mario_jump.png", GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
-		popCat.texUnit(shaderProgram, "tex0", 0);
-
-		// Original code from the tutorial
-		/*Texture popCat("pop_cat.png", GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
-		popCat.texUnit(shaderProgram, "tex0", 0);*/
-
-
-
-		// Main while loop
-		while (!glfwWindowShouldClose(window))
+		// Advance rotation by 0.5° per frame, capped to ~60 updates per second.
+		// Using 1.0/60.0 (double literals) avoids integer division truncating to 0.
+		double crntTime = glfwGetTime();
+		if (crntTime - prevTime >= 1.0 / 60.0)
 		{
-			// Specify the color of the background
-			glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
-			// Clean the back buffer and assign the new color to it
-			glClear(GL_COLOR_BUFFER_BIT);
-			// Tell OpenGL which Shader Program we want to use
-			shaderProgram.Activate();
-
-			// Initializes matrices so they are not the null matrix
-			glm::mat4 model = glm::mat4(1.0f);
-			glm::mat4 view = glm::mat4(1.0f);
-			glm::mat4 proj = glm::mat4(1.0f);
-
-			view = glm::translate(view, glm::vec3(0.0f, -0.5f, -2.0f));
-			proj = glm::perspective(glm::radians(45.0f), (float)(800 / 800), 0.1f, 100.0f);
-
-			// Assigns a value to the uniform; NOTE: Must always be done after activating the Shader Program
-			glUniform1f(uniID, 0.5f);
-			// Binds texture so that is appears in rendering
-			popCat.Bind();
-			// Bind the VAO so OpenGL knows to use it
-			VAO1.Bind();
-			// Draw primitives, number of indices, datatype of indices, index of indices
-			glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
-			// Swap the back buffer with the front buffer
-			glfwSwapBuffers(window);
-			// Take care of all GLFW events
-			glfwPollEvents();
+			rotation += 0.5f;
+			prevTime  = crntTime;
 		}
 
+		// ── MVP matrices (rebuilt every frame because model changes) ──────
+		glm::mat4 model = glm::mat4(1.0f); // Identity — no transform yet
+		glm::mat4 view  = glm::mat4(1.0f);
+		glm::mat4 proj  = glm::mat4(1.0f);
 
+		// Rotate the pyramid around the Y-axis (world up)
+		model = glm::rotate(model, glm::radians(rotation), glm::vec3(0.0f, 1.0f, 0.0f));
 
-		// Delete all the objects we've created
-		VAO1.Delete();
-		VBO1.Delete();
-		EBO1.Delete();
-		popCat.Delete();
-		shaderProgram.Delete();
-		// Delete window before ending the program
-		glfwDestroyWindow(window);
-		// Terminate GLFW before ending the program
-		glfwTerminate();
-		return 0;
-	}
-	catch (const std::exception& ex)
-	{
-		std::cout << ex.what() << std::endl;
-	}
-	catch (...)
-	{
-		std::cout << "An unknown error occurred." << std::endl;
+		// Move the camera back 2 units and down 0.5 so the pyramid sits in frame
+		view = glm::translate(view, glm::vec3(0.0f, -0.5f, -2.0f));
+
+		// Perspective projection: 45° vertical FOV, square aspect ratio, near=0.1, far=100
+		proj = glm::perspective(glm::radians(45.0f), (float)width / height, 0.1f, 100.0f);
+
+		// Upload each matrix to the corresponding uniform in default.vert
+		int modelLoc = glGetUniformLocation(shaderProgram.ID, "model");
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		int viewLoc  = glGetUniformLocation(shaderProgram.ID, "view");
+		glUniformMatrix4fv(viewLoc,  1, GL_FALSE, glm::value_ptr(view));
+		int projLoc  = glGetUniformLocation(shaderProgram.ID, "proj");
+		glUniformMatrix4fv(projLoc,  1, GL_FALSE, glm::value_ptr(proj));
+
+		// scale uniform is no longer used for positioning but kept to avoid an unused-uniform warning
+		glUniform1f(uniID, 0.5f);
+
+		brickTex.Bind(); // Bind texture before the draw call
+		VAO1.Bind();     // Restore vertex format
+
+		// Draw all 6 triangles (12 indices) using the EBO index list
+		glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(GLuint), GL_UNSIGNED_INT, 0);
+
+		glfwSwapBuffers(window); // Present the finished frame
+		glfwPollEvents();        // Process window/input events
 	}
 
+	// ── Cleanup ───────────────────────────────────────────────────────────
+	VAO1.Delete();
+	VBO1.Delete();
+	EBO1.Delete();
+	brickTex.Delete();
+	shaderProgram.Delete();
 	glfwDestroyWindow(window);
 	glfwTerminate();
-	return -1;
+	return 0;
 }
