@@ -69,6 +69,7 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\..\..\..\..\Downloads\vector-fiery-green-hairs-background\green_plane.jpg" />
+    <Image Include="mario_jump.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

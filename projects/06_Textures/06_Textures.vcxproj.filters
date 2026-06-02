@@ -40,5 +40,8 @@
     <Image Include="..\..\..\..\..\Downloads\vector-fiery-green-hairs-background\green_plane.jpg">
       <Filter>Resources\Textures</Filter>
     </Image>
+    <Image Include="mario_jump.png">
+      <Filter>Resources\Textures</Filter>
+    </Image>
   </ItemGroup>
 </Project>

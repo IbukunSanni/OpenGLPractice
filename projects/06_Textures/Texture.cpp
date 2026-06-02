@@ -4,17 +4,19 @@
 #include <stdexcept>
 #include <string>
 
+using namespace std;
+
 namespace
 {
-	std::string get_working_directory()
+	string get_working_directory()
 	{
 		char buffer[_MAX_PATH];
 		if (_getcwd(buffer, _MAX_PATH) != nullptr)
 		{
-			return std::string(buffer);
+			return string(buffer);
 		}
 
-		return std::string("unknown");
+		return string("unknown");
 	}
 
 	unsigned char* load_texture_bytes(const char* image, int& widthImg, int& heightImg, int& numColCh)
@@ -35,7 +37,7 @@ namespace
 
 		for (const char* prefix : fallbackPrefixes)
 		{
-			std::string fallbackPath = std::string(prefix) + image;
+			string fallbackPath = string(prefix) + image;
 			bytes = stbi_load(fallbackPath.c_str(), &widthImg, &heightImg, &numColCh, 0);
 			if (bytes != nullptr)
 			{
@@ -43,8 +45,8 @@ namespace
 			}
 		}
 
-		throw std::runtime_error(
-			std::string("Failed to load texture: ") + image +
+		throw runtime_error(
+			string("Failed to load texture: ") + image +
 			" (working directory: " + get_working_directory() + ")"
 		);
 	}
@@ -73,12 +75,12 @@ Texture::Texture(const char* image, GLenum texType, GLenum slot, GLenum format, 
 	glTexParameteri(texType, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 	// Configures the way the texture repeats (if it does at all)
-	glTexParameteri(texType, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(texType, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(texType, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(texType, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
 	// Extra lines in case you choose to use GL_CLAMP_TO_BORDER
-	// float flatColor[] = {1.0f, 1.0f, 1.0f, 1.0f};
-	// glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, flatColor);
+	float flatColor[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, flatColor);
 
 	// Assigns the image to the OpenGL Texture object
 	glTexImage2D(texType, 0, format, widthImg, heightImg, 0, format, pixelType, bytes);

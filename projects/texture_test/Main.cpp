@@ -16,19 +16,17 @@
 //   - 2 for texture coordinates (u, v) used to map an image onto the shape
 GLfloat vertices[] =
 { //       X      Y      Z        R     G     B       U     V
-	-0.5f, -0.5f, 0.0f,     1.0f, 0.0f, 0.0f,	0.0f, 0.0f, // Lower left corner  (red)
-	-0.5f,  0.5f, 0.0f,     0.0f, 1.0f, 0.0f,	0.0f, 1.0f, // Upper left corner  (green)
-	 0.5f,  0.5f, 0.0f,     0.0f, 0.0f, 1.0f,	1.0f, 1.0f, // Upper right corner (blue)
-	 0.5f, -0.5f, 0.0f,     1.0f, 1.0f, 1.0f,	1.0f, 0.0f  // Lower right corner (white)
+	-0.5f, -0.5f, 0.0f,     1.0f, 0.0f, 0.0f,  -1.0f,-1.0f, // Lower left corner  (red)
+	 0.0f,  0.5f, 0.0f,     0.0f, 1.0f, 0.0f,	0.5f, 2.0f, // Upper corner       (green)
+	 0.5f, -0.5f, 0.0f,     1.0f, 1.0f, 1.0f,	2.0f,-1.0f  // Lower right corner (white)
 };
 
-// OpenGL draws shapes using triangles. To make a square, we need 2 triangles.
+// OpenGL draws shapes using triangles.
 // Instead of duplicating vertex data, we reuse vertices by referring to their
-// index (position) in the vertices array above: 0 = lower-left, 1 = upper-left, etc.
+// index (position) in the vertices array above.
 GLuint indices[] =
 {
-	0, 2, 1, // First triangle  (lower-left, upper-right, upper-left)
-	0, 3, 2  // Second triangle (lower-left, lower-right, upper-right)
+	0, 2, 1  // Triangle (lower-left, lower-right, upper)
 };
 
 
@@ -165,8 +163,8 @@ int main()
 		// Bind our VAO
 		VAO1.Bind();
 
-		// Draw 6 indices (2 triangles) using the data from our VAO and EBO.
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		// Draw 3 indices (1 triangle) using the data from our VAO and EBO.
+		glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
 
 		// OpenGL uses "double buffering": it draws to a hidden back buffer, then
 		// swaps it to the screen. This prevents flickering or half-drawn frames.
