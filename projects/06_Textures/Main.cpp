@@ -96,7 +96,7 @@ int main()
 
 
 		// Texture
-		Texture popCat("projects/06_Textures/mario_jump.png", GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
+		Texture popCat("Assets/Textures/mario_jump.png", GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
 		popCat.texUnit(shaderProgram, "tex0", 0);
 
 		// Original code from the tutorial
