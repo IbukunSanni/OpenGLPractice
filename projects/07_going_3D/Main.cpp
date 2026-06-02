@@ -3,12 +3,18 @@
 #include<glad/glad.h>
 #include<GLFW/glfw3.h>
 #include<stb/stb_image.h>
+#include<glm/glm.hpp>
+#include<glm/gtc/matrix_transform.hpp>
+#include<glm/gtc/type_ptr.hpp>
 
 #include"Texture.h"
 #include"shaderClass.h"
 #include"VAO.h"
 #include"VBO.h"
 #include"EBO.h"
+
+const unsigned int width;
+const unsigned int height;
 
 
 
@@ -114,6 +120,15 @@ int main()
 			glClear(GL_COLOR_BUFFER_BIT);
 			// Tell OpenGL which Shader Program we want to use
 			shaderProgram.Activate();
+
+			// Initializes matrices so they are not the null matrix
+			glm::mat4 model = glm::mat4(1.0f);
+			glm::mat4 view = glm::mat4(1.0f);
+			glm::mat4 proj = glm::mat4(1.0f);
+
+			view = glm::translate(view, glm::vec3(0.0f, -0.5f, -2.0f));
+			proj = glm::perspective(glm::radians(45.0f), (float)(800 / 800), 0.1f, 100.0f);
+
 			// Assigns a value to the uniform; NOTE: Must always be done after activating the Shader Program
 			glUniform1f(uniID, 0.5f);
 			// Binds texture so that is appears in rendering
