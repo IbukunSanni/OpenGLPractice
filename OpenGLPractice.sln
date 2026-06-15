@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 18
-VisualStudioVersion = 18.6.11822.322
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.37027.9 d17.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "projects", "projects", "{E0000000-0000-0000-0000-000000000000}"
 EndProject
@@ -21,6 +21,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "texture_test", "projects\texture_test\texture_test.vcxproj", "{A6000000-0000-0000-0000-000000000099}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "07_going_3D", "projects\07_going_3D\07_going_3D.vcxproj", "{A7000000-0000-0000-0000-000000000007}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "08_Camera", "projects\08_Camera\08_Camera.vcxproj", "{710A4C90-14A4-48C3-9552-1A3D318565AC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -64,8 +66,15 @@ Global
 		{A7000000-0000-0000-0000-000000000007}.Debug|x64.Build.0 = Debug|x64
 		{A7000000-0000-0000-0000-000000000007}.Release|x64.ActiveCfg = Release|x64
 		{A7000000-0000-0000-0000-000000000007}.Release|x64.Build.0 = Release|x64
+		{710A4C90-14A4-48C3-9552-1A3D318565AC}.Debug|x64.ActiveCfg = Debug|x64
+		{710A4C90-14A4-48C3-9552-1A3D318565AC}.Debug|x64.Build.0 = Debug|x64
+		{710A4C90-14A4-48C3-9552-1A3D318565AC}.Release|x64.ActiveCfg = Release|x64
+		{710A4C90-14A4-48C3-9552-1A3D318565AC}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {316836F2-DDB3-435E-9397-90EE24475744}
 	EndGlobalSection
 EndGlobal

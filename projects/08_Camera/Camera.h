@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CAMERA_CLASS_H
+#define CAMERA_CLASS_H
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -71,3 +72,5 @@ public:
 	//   LMB release  — restores cursor and resets firstClick
 	void Inputs(GLFWwindow* window);
 };
+
+#endif
