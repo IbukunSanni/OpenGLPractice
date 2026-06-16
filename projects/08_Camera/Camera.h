@@ -1,5 +1,5 @@
-#ifndef CAMERA_CLASS_H
-#define CAMERA_CLASS_H
+#pragma once
+#define GLM_ENABLE_EXPERIMENTAL
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -64,13 +64,39 @@ public:
 	void Matrix(float FOVdeg, float nearPlane, float farPlane, Shader& shader, const char* uniform);
 
 	// Polls GLFW keyboard and mouse state then moves/rotates the camera:
-	//   W/S          — forward / backward along Orientation
-	//   A/D          — strafe left / right
-	//   Space / Ctrl — fly up / down along world Up
-	//   Left Shift   — sprint (speed × 4)
-	//   LMB hold     — hides cursor and enables mouse look (drag to rotate)
-	//   LMB release  — restores cursor and resets firstClick
+	//   MMB drag         — orbit around the focus point
+	//   Shift + MMB drag — pan
+	//   Mouse wheel      — zoom (dolly in/out)
+	//   W/S              — forward / backward along Orientation
+	//   A/D              — strafe left / right
+	//   Space / Ctrl     — fly up / down along world Up
+	//   Left Shift       — sprint (speed × 4)
 	void Inputs(GLFWwindow* window);
+
+	// Registers callbacks and stores this camera on the GLFW window.
+	void AttachToWindow(GLFWwindow* window);
+
+private:
+	// Point the camera orbits around (Blender-style pivot).
+	glm::vec3 focusPoint = glm::vec3(0.0f, 0.0f, 0.0f);
+
+	// Mouse state used for Blender-like controls.
+	bool middleMouseHeld = false;
+	double lastMouseX = 0.0;
+	double lastMouseY = 0.0;
+
+	// Tuning parameters for Blender-like controls.
+	float orbitSensitivity = 0.15f;
+	float panSensitivity = 0.002f;
+	float zoomSensitivity = 0.4f;
+
+	// Orbit camera around focusPoint using mouse delta.
+	void Orbit(float deltaX, float deltaY);
+	// Move both camera and focusPoint sideways/up-down in view space.
+	void Pan(float deltaX, float deltaY);
+	// Dolly camera toward/away from focusPoint.
+	void Zoom(float amount);
+	// GLFW scroll callback entry point (for mouse wheel zoom).
+	static void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 };
 
-#endif

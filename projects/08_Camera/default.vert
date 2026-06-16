@@ -9,22 +9,13 @@ layout (location = 2) in vec2 aTex;    // UV texture coordinate
 out vec3 color;
 out vec2 texCoord;
 
-// Unused scale uniform kept for compatibility with the CPU-side uniform upload
-uniform float scale;
-
-// MVP matrices uploaded each frame from main.cpp
-// Model  : transforms vertices from object space → world space (rotation, translation, scale)
-// View   : transforms from world space → camera/eye space (camera position & orientation)
-// Proj   : transforms from eye space → clip space (perspective divide, FOV, near/far planes)
-uniform mat4 model;
-uniform mat4 view;
-uniform mat4 proj;
+uniform mat4 camMatrix;
 
 void main()
 {
 	// Full MVP transform: object space → world → eye → clip space
 	// OpenGL then performs the perspective divide (/ w) to get NDC, then maps to the viewport
-	gl_Position = proj * view * model * vec4(aPos, 1.0);
+	gl_Position = camMatrix * vec4(aPos, 1.0);
 
 	color    = aColor;
 	texCoord = aTex;

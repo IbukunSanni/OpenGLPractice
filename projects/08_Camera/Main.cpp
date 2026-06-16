@@ -51,7 +51,7 @@ int main()
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	GLFWwindow* window = glfwCreateWindow(width, height, "YoutubeOpenGL", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(width, height, "08_Camera", NULL, NULL);
 	if (window == NULL)
 	{
 		std::cout << "Failed to create GLFW window" << std::endl;
@@ -111,6 +111,7 @@ int main()
 
 	// Creates camera object
 	Camera camera(width, height, glm::vec3(0.0f, 0.0f, 2.0f));
+	camera.AttachToWindow(window);
 
 	// ── Render loop ───────────────────────────────────────────────────────
 	while (!glfwWindowShouldClose(window))
@@ -121,14 +122,11 @@ int main()
 
 		shaderProgram.Activate();
 
+		// Handles camera inputs
 		camera.Inputs(window);
+		// Updates and exports the camera matrix to the Vertex Shader
+		camera.Matrix(45.0f, 0.1f, 50.0f, shaderProgram, "camMatrix");
 
-
-
-
-
-		// scale uniform is no longer used for positioning but kept to avoid an unused-uniform warning
-		glUniform1f(uniID, 0.5f);
 
 		brickTex.Bind(); // Bind texture before the draw call
 		VAO1.Bind();     // Restore vertex format
