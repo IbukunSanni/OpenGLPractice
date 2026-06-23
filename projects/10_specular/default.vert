@@ -1,0 +1,28 @@
+#version 330 core
+
+// Per-vertex inputs from the VBO (must match VAO attribute layout indices)
+layout (location = 0) in vec3 aPos;    // 3D position in object/model space
+layout (location = 1) in vec3 aColor;  // RGB vertex color
+layout (location = 2) in vec2 aTex;    // UV texture coordinate
+layout (location = 3) in vec3 aNormal; // Normal for lighting
+
+// Passed through to the fragment shader for interpolation across the triangle
+out vec3 color;
+out vec2 texCoord;
+out vec3 Normal;
+out vec3 crntPos;
+
+uniform mat4 camMatrix;
+uniform mat4 model;
+
+void main()
+{
+	// Full MVP transform: object space → world → eye → clip space
+	// OpenGL then performs the perspective divide (/ w) to get NDC, then maps to the viewport
+	gl_Position = camMatrix * model * vec4(aPos, 1.0);
+
+	crntPos  = vec3(model * vec4(aPos, 1.0));
+	Normal   = aNormal;
+	color    = aColor;
+	texCoord = aTex;
+}
