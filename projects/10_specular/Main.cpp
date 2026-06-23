@@ -93,7 +93,7 @@ int main()
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	GLFWwindow* window = glfwCreateWindow(width, height, "08_Camera", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(width, height, "10_specular", NULL, NULL);
 	if (window == NULL)
 	{
 		std::cout << "Failed to create GLFW window" << std::endl;
@@ -142,7 +142,9 @@ int main()
 	VBO1.Unbind();
 	EBO1.Unbind();
 
-	// TODO write a light.vert and light.frag, then create a Shader for the light source and set up its VAO/VBO/EBO like above.
+	// Compile and link the light-cube shaders (light.vert / light.frag).
+	// These are kept separate from the pyramid shaders so the cube can render
+	// as a plain solid colour independent of the Phong lighting calculation.
 	Shader lightShader("light.vert", "light.frag");
 
 	VAO lightVAO;
@@ -151,19 +153,24 @@ int main()
 	VBO lightVBO(lightVertices, sizeof(lightVertices));
 	EBO lightEBO(lightIndices, sizeof(lightIndices));
 
+	// The light cube only needs attribute 0 (position — 3 floats, tightly packed).
+	// No color, UV, or normal attributes are used by the light shaders.
 	lightVAO.LinkAttrib(lightVBO, 0, 3, GL_FLOAT, 3 * sizeof(float), (void*)0);
 
 	lightVAO.Unbind();
 	lightVBO.Unbind();
 	lightEBO.Unbind();
 
-	// Light properties shared with both shaders.
-	glm::vec4 lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-	glm::vec3 lightPos = glm::vec3(1.2f, 0.8f, 0.8f);
+	// ── Light and pyramid transforms (initial / pre-loop setup) ─────────────
+	// These values are used once here to push the initial uniforms to both
+	// shaders before the render loop starts. Inside the loop, local copies
+	// shadow these — see the per-frame update comment below.
+	glm::vec4 lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f); // Pure white light
+	glm::vec3 lightPos = glm::vec3(1.2f, 0.8f, 0.8f);          // World-space light position
 	glm::mat4 lightModel = glm::mat4(1.0f);
-	lightModel = glm::translate(lightModel, lightPos);
+	lightModel = glm::translate(lightModel, lightPos); // Place the light cube at lightPos
 
-	glm::vec3 pyramidPos = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::vec3 pyramidPos = glm::vec3(0.0f, 0.0f, 0.0f); // Pyramid sits at the world origin
 	glm::mat4 pyramidModel = glm::mat4(1.0f);
 	pyramidModel = glm::translate(pyramidModel, pyramidPos);
 
@@ -198,10 +205,12 @@ int main()
 		glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// Rebuild model matrices each frame (keeps transform logic together if animation is added later).
+		// Per-frame model matrix rebuild — local variables shadow the pre-loop ones.
+		// Keeping this here makes it straightforward to animate the light or pyramid
+		// later (e.g. multiply by glfwGetTime()).
 		glm::vec3 lightPos = glm::vec3(0.5f, 0.5f, 0.5f);
 		glm::mat4 lightModel = glm::mat4(1.0f);
-		lightModel = glm::translate(lightModel, lightPos);
+		lightModel = glm::translate(lightModel, lightPos); // Cube follows lightPos each frame
 
 		glm::vec3 pyramidPos = glm::vec3(0.0f, 0.0f, 0.0f);
 		glm::mat4 pyramidModel = glm::mat4(1.0f);
@@ -220,6 +229,8 @@ int main()
 		camera.UpdateMatrix(45.0f, 0.1f, 50.0f);
 
 		shaderProgram.Activate();
+		// Upload the camera's world-space position every frame so the fragment shader
+		// can compute the view direction for the specular highlight calculation.
 		glUniform3f(glGetUniformLocation(shaderProgram.ID, "camPos"), camera.Position.x, camera.Position.y, camera.Position.z);
 		camera.Matrix(shaderProgram, "camMatrix");
 
