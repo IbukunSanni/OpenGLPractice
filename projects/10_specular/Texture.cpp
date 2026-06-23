@@ -52,28 +52,27 @@ namespace
 	}
 }
 
-Texture::Texture(const char* image, GLenum texType, GLenum slot, GLenum format, GLenum pixelType)
+Texture::Texture(const char* image, GLenum texType, GLuint slot, GLenum format, GLenum pixelType)
 {
 	// Assigns the type of the texture to the texture object
 	type = texType;
 
 	// Stores the width, height, and the number of color channels of the image
 	int widthImg, heightImg, numColCh;
-
 	// Flips the image so it appears right side up
 	stbi_set_flip_vertically_on_load(true);
-
 	// Reads the image from a file and stores it in bytes
 	unsigned char* bytes = load_texture_bytes(image, widthImg, heightImg, numColCh);
 
 	// Generates an OpenGL texture object
 	glGenTextures(1, &ID);
-
 	// Assigns the texture to a Texture Unit
-	glActiveTexture(slot);
+	// slot is a plain index (0, 1, 2...); adding GL_TEXTURE0 gives the correct GLenum
+	glActiveTexture(GL_TEXTURE0 + slot);
+	unit = slot;
 	glBindTexture(texType, ID);
 
-	// Configures the type of algorithm
+	// Configures the type of algorithm that is used to make the image smaller or bigger
 	glTexParameteri(texType, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
 	glTexParameteri(texType, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
@@ -83,23 +82,13 @@ Texture::Texture(const char* image, GLenum texType, GLenum slot, GLenum format, 
 
 	// Extra lines in case you choose to use GL_CLAMP_TO_BORDER
 	// float flatColor[] = {1.0f, 1.0f, 1.0f, 1.0f};
-	// float flatColor[] = {1.0f, 1.0f, 1.0f, 1.0f};
+	// glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, flatColor);
 
-	// glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, flatColor);GLenum format;
-	if (numColCh == 4)
-		format = GL_RGBA;
-	else if (numColCh == 3)
-		format = GL_RGB;
-	else if (numColCh == 1)
-		format = GL_RED;
-	else
-		throw std::invalid_argument("Automatic Texture type recognition failed");
-
-	glTexImage2D(texType, 0, format, widthImg, heightImg, 0, format, pixelType, bytes);
 	// Assigns the image to the OpenGL Texture object
-	glTexImage2D(texType, 0, format, widthImg, heightImg, 0, format, pixelType, bytes);
+	glTexImage2D(texType, 0, GL_RGBA, widthImg, heightImg, 0, format, pixelType, bytes);
 	// Generates MipMaps
 	glGenerateMipmap(texType);
+
 	// Deletes the image data as it is already in the OpenGL Texture object
 	stbi_image_free(bytes);
 	// Unbinds the OpenGL Texture object so that it can't accidentally be modified
@@ -118,6 +107,9 @@ void Texture::texUnit(Shader& shader, const char* uniform, GLuint unit)
 
 void Texture::Bind()
 {
+	// Re-activate the correct texture unit before binding so multi-texture
+	// setups stay consistent (each Texture knows its own slot index).
+	glActiveTexture(GL_TEXTURE0 + unit);
 	glBindTexture(type, ID);
 }
 

@@ -188,7 +188,8 @@ int main()
 
 	// ── Texture ───────────────────────────────────────────────────────────
 	// Loads the image, uploads it to texture unit 0, and binds the sampler uniform "tex0"
-	Texture brickTex("Assets/Textures/green_plane.jpg", GL_TEXTURE_2D, GL_TEXTURE0, GL_RGBA, GL_UNSIGNED_BYTE);
+	// Pass the slot as a plain index (0 = GL_TEXTURE0); Texture internally computes GL_TEXTURE0 + slot.
+	Texture brickTex("Assets/Textures/green_plane.jpg", GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE);
 	brickTex.texUnit(shaderProgram, "tex0", 0);
 
 	// Depth testing ensures back faces do not overdraw front faces
