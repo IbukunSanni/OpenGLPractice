@@ -17,41 +17,20 @@
 const unsigned int width = 800;
 const unsigned int height = 800;
 
-// Pyramid with duplicated vertices per face so each face has its own normal.
-// Each vertex: X, Y, Z,  R, G, B,  U, V,  Nx, Ny, Nz
+// Vertices coordinates
 GLfloat vertices[] =
-{ //     COORDINATES     /        COLORS          /    TexCoord   /        NORMALS       //
-	-0.5f, 0.0f,  0.5f,     0.83f, 0.70f, 0.44f,    0.0f, 0.0f,      0.0f, -1.0f, 0.0f, // Bottom side
-	-0.5f, 0.0f, -0.5f,     0.83f, 0.70f, 0.44f,    0.0f, 5.0f,      0.0f, -1.0f, 0.0f, // Bottom side
-	 0.5f, 0.0f, -0.5f,     0.83f, 0.70f, 0.44f,    5.0f, 5.0f,      0.0f, -1.0f, 0.0f, // Bottom side
-	 0.5f, 0.0f,  0.5f,     0.83f, 0.70f, 0.44f,    5.0f, 0.0f,      0.0f, -1.0f, 0.0f, // Bottom side
-
-	-0.5f, 0.0f,  0.5f,     0.83f, 0.70f, 0.44f,    0.0f, 0.0f,     -0.8f, 0.5f,  0.0f, // Left side
-	-0.5f, 0.0f, -0.5f,     0.83f, 0.70f, 0.44f,    5.0f, 0.0f,     -0.8f, 0.5f,  0.0f, // Left side
-	 0.0f, 0.8f,  0.0f,     0.92f, 0.86f, 0.76f,    2.5f, 5.0f,     -0.8f, 0.5f,  0.0f, // Left side
-
-	-0.5f, 0.0f, -0.5f,     0.83f, 0.70f, 0.44f,    5.0f, 0.0f,      0.0f, 0.5f, -0.8f, // Back side
-	 0.5f, 0.0f, -0.5f,     0.83f, 0.70f, 0.44f,    0.0f, 0.0f,      0.0f, 0.5f, -0.8f, // Back side
-	 0.0f, 0.8f,  0.0f,     0.92f, 0.86f, 0.76f,    2.5f, 5.0f,      0.0f, 0.5f, -0.8f, // Back side
-
-	 0.5f, 0.0f, -0.5f,     0.83f, 0.70f, 0.44f,    0.0f, 0.0f,      0.8f, 0.5f,  0.0f, // Right side
-	 0.5f, 0.0f,  0.5f,     0.83f, 0.70f, 0.44f,    5.0f, 0.0f,      0.8f, 0.5f,  0.0f, // Right side
-	 0.0f, 0.8f,  0.0f,     0.92f, 0.86f, 0.76f,    2.5f, 5.0f,      0.8f, 0.5f,  0.0f, // Right side
-
-	 0.5f, 0.0f,  0.5f,     0.83f, 0.70f, 0.44f,    5.0f, 0.0f,      0.0f, 0.5f,  0.8f, // Front side
-	-0.5f, 0.0f,  0.5f,     0.83f, 0.70f, 0.44f,    0.0f, 0.0f,      0.0f, 0.5f,  0.8f, // Front side
-	 0.0f, 0.8f,  0.0f,     0.92f, 0.86f, 0.76f,    2.5f, 5.0f,      0.0f, 0.5f,  0.8f  // Front side
+{ //     COORDINATES     /        COLORS        /    TexCoord    /       NORMALS     //
+	-1.0f, 0.0f,  1.0f,		0.0f, 0.0f, 0.0f,		0.0f, 0.0f,		0.0f, 1.0f, 0.0f,
+	-1.0f, 0.0f, -1.0f,		0.0f, 0.0f, 0.0f,		0.0f, 1.0f,		0.0f, 1.0f, 0.0f,
+	 1.0f, 0.0f, -1.0f,		0.0f, 0.0f, 0.0f,		1.0f, 1.0f,		0.0f, 1.0f, 0.0f,
+	 1.0f, 0.0f,  1.0f,		0.0f, 0.0f, 0.0f,		1.0f, 0.0f,		0.0f, 1.0f, 0.0f
 };
 
-// Two triangles form the base and four triangles form the side faces.
+// Indices for vertices order
 GLuint indices[] =
 {
 	0, 1, 2,
-	0, 2, 3,
-	4, 6, 5,
-	7, 9, 8,
-	10, 12, 11,
-	13, 15, 14
+	0, 2, 3
 };
 
 GLfloat lightVertices[] =
@@ -189,7 +168,9 @@ int main()
 	// ── Texture ───────────────────────────────────────────────────────────
 	// Loads the image, uploads it to texture unit 0, and binds the sampler uniform "tex0"
 	// Pass the slot as a plain index (0 = GL_TEXTURE0); Texture internally computes GL_TEXTURE0 + slot.
-	Texture brickTex("Assets/Textures/green_plane.jpg", GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE);
+	// green_plane.jpg is a JPEG (3 channels), so use GL_RGB as the pixel format.
+	// Using GL_RGBA here would make glTexImage2D read 4 bytes per pixel from a 3-byte buffer, causing a crash.
+	Texture brickTex("Assets/Textures/green_plane.jpg", GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE);
 	brickTex.texUnit(shaderProgram, "tex0", 0);
 
 	// Depth testing ensures back faces do not overdraw front faces
