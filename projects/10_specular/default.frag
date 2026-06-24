@@ -15,14 +15,16 @@ uniform sampler2D tex1;   // Specular map texture (optional)
 uniform vec4 lightColor;  // RGBA color of the light source
 uniform vec3 lightPos;    // World-space position of the point light
 uniform vec3 camPos;      // World-space camera position (required for specular view direction)
+uniform float attenuationA;
+uniform float attenuationB;
 
 vec4 pontLight(){
 
 	vec3 lightVec = lightPos - crntPos;
 
 	float dist = length(lightVec);
-	float a = 3.0;
-	float b = 0.7;
+	float a = 0.02;
+	float b = 0.001;
 	float attenuation = 1.0 / (1.0 + a * dist + b * dist * dist);
 
 	// Renormalize after interpolation — blending normals across a triangle can
@@ -73,7 +75,9 @@ vec4 pontLight(){
 	// together is the core of the Phong shading model.
 	vec4 texColor = texture(tex0, texCoord);
 	float specMap = texture(tex1, texCoord).r;
-	return (texColor * (diffuse + ambient) + specMap * specular * attenuation) * lightColor;
+	vec4 diffuseTerm = texColor * (ambient + diffuse * attenuation);
+	vec4 specularTerm = vec4(vec3(specMap * specular * attenuation), 0.0);
+	return (diffuseTerm + specularTerm) * lightColor;
 
 }
 

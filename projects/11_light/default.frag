@@ -16,55 +16,88 @@ uniform vec4 lightColor;  // RGBA color of the light source
 uniform vec3 lightPos;    // World-space position of the point light
 uniform vec3 camPos;      // World-space camera position (required for specular view direction)
 
+// Computes ambient, diffuse, specular terms for Phong lighting.
+// Return order: (ambient, diffuse, specular).
+vec3 computePhongTerms(vec3 normal, vec3 lightDirection, float ambientStrength, float specularStrength, float shininess)
+{
+	float diffuse = max(dot(normal, lightDirection), 0.0f);
+	vec3 viewDirection = normalize(camPos - crntPos);
+	vec3 reflectionDirection = reflect(-lightDirection, normal);
+	float specAmount = pow(max(dot(viewDirection, reflectionDirection), 0.0f), shininess);
+	float specular = specAmount * specularStrength;
+
+	return vec3(ambientStrength, diffuse, specular);
+}
+
+// Computes distance attenuation for a point light.
+float computePointAttenuation(float distanceToLight, float linearFactor, float quadraticFactor)
+{
+	return 1.0f / (quadraticFactor * distanceToLight * distanceToLight + linearFactor * distanceToLight + 1.0f);
+}
+
+// Computes cone intensity for a spotlight.
+float computeSpotIntensity(vec3 lightDirection, vec3 coneDirection, float outerCone, float innerCone)
+{
+	float angle = dot(coneDirection, -lightDirection);
+	return clamp((angle - outerCone) / (innerCone - outerCone), 0.0f, 1.0f);
+}
+
+// Combines texture color + specular map with light terms.
+// lightIntensity controls attenuation/cone strength.
+vec4 composeLitColor(vec3 terms, float lightIntensity)
+{
+	vec4 diffuseTex = texture(tex0, texCoord);
+	float specMap = texture(tex1, texCoord).r;
+	float ambient = terms.x;
+	float diffuse = terms.y;
+	float specular = terms.z;
+
+	return (diffuseTex * (diffuse * lightIntensity + ambient) + specMap * specular * lightIntensity) * lightColor;
+}
+
+// Local point light with distance falloff.
+vec4 computePointLightColor()
+{
+	// Light vector from fragment to point light.
+	vec3 lightVec = lightPos - crntPos;
+	float dist = length(lightVec);
+	float linearFactor = 12.0f;
+	float quadraticFactor = 12.0f;
+	float intensity = computePointAttenuation(dist, linearFactor, quadraticFactor);
+
+	vec3 normal = normalize(Normal);
+	vec3 lightDirection = normalize(lightVec);
+	vec3 terms = computePhongTerms(normal, lightDirection, 0.20f, 0.50f, 16.0f);
+
+	return composeLitColor(terms, intensity);
+}
+
+// Global directional light (no distance attenuation).
+vec4 computeDirectionalLightColor()
+{
+	vec3 normal = normalize(Normal);
+	vec3 lightDirection = normalize(vec3(1.0f, 1.0f, 0.0f));
+	vec3 terms = computePhongTerms(normal, lightDirection, 0.20f, 0.50f, 16.0f);
+
+	return composeLitColor(terms, 1.0f);
+}
+
+// Spotlight using cone-based intensity.
+vec4 computeSpotLightColor()
+{
+	// Controls spotlight cone width.
+	float outerCone = 0.90f;
+	float innerCone = 0.95f;
+
+	vec3 normal = normalize(Normal);
+	vec3 lightDirection = normalize(lightPos - crntPos);
+	vec3 terms = computePhongTerms(normal, lightDirection, 0.20f, 0.50f, 16.0f);
+	float intensity = computeSpotIntensity(lightDirection, vec3(0.0f, -1.0f, 0.0f), outerCone, innerCone);
+
+	return composeLitColor(terms, intensity);
+}
+
 void main()
 {
-	// Renormalize after interpolation — blending normals across a triangle can
-	// shorten them, which would produce incorrect dot product results below.
-	vec3 normal = normalize(Normal);
-
-	// Direction from the surface fragment toward the light source.
-	vec3 lightDirection = normalize(lightPos - crntPos);
-
-	// ── Ambient ─────────────────────────────────────────────────────────────
-	// A small constant added so surfaces never go completely black.
-	// Simulates indirect light that has scattered around the scene.
-	float ambient = 0.15f;
-
-	// ── Diffuse ─────────────────────────────────────────────────────────────
-	// Lambert's cosine law: brightness is proportional to how directly the
-	// surface faces the light.
-	//   dot == 1 → surface faces the light head-on  → full brightness
-	//   dot == 0 → surface is edge-on to the light  → no diffuse contribution
-	//   dot <  0 → light is behind the surface       → clamped to 0
-	float diffuse = max(dot(normal, lightDirection), 0.0f);
-
-	// ── Specular (Phong reflection model) ───────────────────────────────────
-	// Models the bright highlight visible when the view direction aligns with
-	// the mirror-reflected light ray (think shiny plastic or polished metal).
-
-	// Overall strength of the specular contribution.
-	float specularLight = 0.50f;
-
-	// Direction from this surface fragment toward the camera.
-	vec3 viewDirection = normalize(camPos - crntPos);
-
-	// Perfect mirror-reflection of the incoming light about the surface normal.
-	// reflect() expects the *incident* direction (light → surface), so we negate
-	// lightDirection (which points surface → light) to get the right sign.
-	vec3 reflectionDirection = reflect(-lightDirection, normal);
-
-	// How well the viewer's direction aligns with the reflection direction.
-	// pow(..., 16) sharpens the falloff: higher exponent = tighter, shinier highlight.
-	//   exponent  8 → broad, matte-looking highlight
-	//   exponent 64 → tight, mirror-like highlight
-	float specAmount = pow(max(dot(viewDirection, reflectionDirection), 0.0f), 16);
-	float specular = specAmount * specularLight;
-
-	// ── Final colour composition ─────────────────────────────────────────────
-	// Sample the texture, then scale by the sum of all three lighting terms
-	// multiplied by the light's own colour. Adding ambient + diffuse + specular
-	// together is the core of the Phong shading model.
-	vec4 texColor = texture(tex0, texCoord);
-	float specMap = texture(tex1, texCoord).r;
-	FragColor = (texColor * (diffuse + ambient) + specMap * specular) * lightColor;
+	FragColor = computePointLightColor();
 }

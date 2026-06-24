@@ -1,5 +1,7 @@
 #include <iostream>
 #include <exception>
+#include <iomanip>
+#include <sstream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <stb/stb_image.h>
@@ -181,6 +183,11 @@ int run()
 	Camera camera(width, height, glm::vec3(0.0f, 0.0f, 2.0f));
 	camera.AttachToWindow(window);
 
+	float attenuationA = 1.0f;
+	float attenuationB = 1.8f;
+	bool attenuationMessageShown = false;
+	bool attenuationChanged = true;
+
 	// ── Render loop ───────────────────────────────────────────────────────
 	while (!glfwWindowShouldClose(window))
 	{
@@ -207,6 +214,27 @@ int run()
 		glUniformMatrix4fv(glGetUniformLocation(shaderProgram.ID, "model"), 1, GL_FALSE, glm::value_ptr(planeModel));
 		glUniform3f(glGetUniformLocation(shaderProgram.ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
 
+		if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
+		{
+			attenuationA = glm::max(0.0f, attenuationA - 0.02f);
+			attenuationChanged = true;
+		}
+		if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
+		{
+			attenuationA += 0.02f;
+			attenuationChanged = true;
+		}
+		if (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS)
+		{
+			attenuationB = glm::max(0.0f, attenuationB - 0.02f);
+			attenuationChanged = true;
+		}
+		if (glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS)
+		{
+			attenuationB += 0.02f;
+			attenuationChanged = true;
+		}
+
 		// Handles camera inputs
 		camera.Inputs(window);
 		// Updates and exports the camera matrix to the Vertex Shader
@@ -216,7 +244,25 @@ int run()
 		// Upload the camera's world-space position every frame so the fragment shader
 		// can compute the view direction for the specular highlight calculation.
 		glUniform3f(glGetUniformLocation(shaderProgram.ID, "camPos"), camera.Position.x, camera.Position.y, camera.Position.z);
+		glUniform1f(glGetUniformLocation(shaderProgram.ID, "attenuationA"), attenuationA);
+		glUniform1f(glGetUniformLocation(shaderProgram.ID, "attenuationB"), attenuationB);
 		camera.Matrix(shaderProgram, "camMatrix");
+
+		if (!attenuationMessageShown)
+		{
+			std::cout << "Attenuation controls: 1/2 decrease/increase A, 3/4 decrease/increase B" << std::endl;
+			attenuationMessageShown = true;
+		}
+
+		if (attenuationChanged)
+		{
+			std::ostringstream titleStream;
+			titleStream << std::fixed << std::setprecision(2)
+				<< "10_specular | A=" << attenuationA << " B=" << attenuationB
+				<< " (1/2 A-,A+ 3/4 B-,B+)";
+			glfwSetWindowTitle(window, titleStream.str().c_str());
+			attenuationChanged = false;
+		}
 
 		lightShader.Activate();
 		camera.Matrix(lightShader, "camMatrix");
