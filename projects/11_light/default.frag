@@ -16,21 +16,14 @@ uniform vec4 lightColor;  // RGBA color of the light source
 uniform vec3 lightPos;    // World-space position of the point light
 uniform vec3 camPos;      // World-space camera position (required for specular view direction)
 
-vec4 pontLight(){
-
-	vec3 lightVec = lightPos - crntPos;
-
-	float dist = length(lightVec);
-	float a = 3.0;
-	float b = 0.7;
-	float attenuation = 1.0 / (1.0 + a * dist + b * dist * dist);
-
+void main()
+{
 	// Renormalize after interpolation — blending normals across a triangle can
 	// shorten them, which would produce incorrect dot product results below.
 	vec3 normal = normalize(Normal);
 
 	// Direction from the surface fragment toward the light source.
-	vec3 lightDirection = normalize(lightVec);
+	vec3 lightDirection = normalize(lightPos - crntPos);
 
 	// ── Ambient ─────────────────────────────────────────────────────────────
 	// A small constant added so surfaces never go completely black.
@@ -73,11 +66,5 @@ vec4 pontLight(){
 	// together is the core of the Phong shading model.
 	vec4 texColor = texture(tex0, texCoord);
 	float specMap = texture(tex1, texCoord).r;
-	return (texColor * (diffuse + ambient) + specMap * specular * attenuation) * lightColor;
-
-}
-
-void main()
-{
-	FragColor = pontLight();
+	FragColor = (texColor * (diffuse + ambient) + specMap * specular) * lightColor;
 }

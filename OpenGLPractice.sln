@@ -5,17 +5,9 @@ VisualStudioVersion = 18.6.11828.311
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "projects", "projects", "{E0000000-0000-0000-0000-000000000000}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "triangle-animation", "projects\triangle-animation\triangle-animation.vcxproj", "{B0000000-0000-0000-0000-000000000007}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "new-experiment", "projects\new-experiment\new-experiment.vcxproj", "{B1000000-0000-0000-0000-000000000008}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "texture_test", "projects\texture_test\texture_test.vcxproj", "{A6000000-0000-0000-0000-000000000099}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "09_lighting", "projects\09_lighting\09_lighting.vcxproj", "{8B3618C9-6908-4BAE-9AC9-457F0313F94A}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "10_specular", "projects\10_specular\10_specular.vcxproj", "{3F9400EB-A30A-4944-B3C2-3DED19A7D4BB}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "NewFolder1", "NewFolder1", "{6E20C3A7-472C-4E83-8BCE-D00CA1F60562}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "11_light", "projects\11_light\11_light.vcxproj", "{41EEB5F9-370F-49D7-84A4-5B76B85AA385}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,26 +15,14 @@ Global
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{B0000000-0000-0000-0000-000000000007}.Debug|x64.ActiveCfg = Debug|x64
-		{B0000000-0000-0000-0000-000000000007}.Debug|x64.Build.0 = Debug|x64
-		{B0000000-0000-0000-0000-000000000007}.Release|x64.ActiveCfg = Release|x64
-		{B0000000-0000-0000-0000-000000000007}.Release|x64.Build.0 = Release|x64
-		{B1000000-0000-0000-0000-000000000008}.Debug|x64.ActiveCfg = Debug|x64
-		{B1000000-0000-0000-0000-000000000008}.Debug|x64.Build.0 = Debug|x64
-		{B1000000-0000-0000-0000-000000000008}.Release|x64.ActiveCfg = Release|x64
-		{B1000000-0000-0000-0000-000000000008}.Release|x64.Build.0 = Release|x64
-		{A6000000-0000-0000-0000-000000000099}.Debug|x64.ActiveCfg = Debug|x64
-		{A6000000-0000-0000-0000-000000000099}.Debug|x64.Build.0 = Debug|x64
-		{A6000000-0000-0000-0000-000000000099}.Release|x64.ActiveCfg = Release|x64
-		{A6000000-0000-0000-0000-000000000099}.Release|x64.Build.0 = Release|x64
-		{8B3618C9-6908-4BAE-9AC9-457F0313F94A}.Debug|x64.ActiveCfg = Debug|x64
-		{8B3618C9-6908-4BAE-9AC9-457F0313F94A}.Debug|x64.Build.0 = Debug|x64
-		{8B3618C9-6908-4BAE-9AC9-457F0313F94A}.Release|x64.ActiveCfg = Release|x64
-		{8B3618C9-6908-4BAE-9AC9-457F0313F94A}.Release|x64.Build.0 = Release|x64
 		{3F9400EB-A30A-4944-B3C2-3DED19A7D4BB}.Debug|x64.ActiveCfg = Debug|x64
 		{3F9400EB-A30A-4944-B3C2-3DED19A7D4BB}.Debug|x64.Build.0 = Debug|x64
 		{3F9400EB-A30A-4944-B3C2-3DED19A7D4BB}.Release|x64.ActiveCfg = Release|x64
 		{3F9400EB-A30A-4944-B3C2-3DED19A7D4BB}.Release|x64.Build.0 = Release|x64
+		{41EEB5F9-370F-49D7-84A4-5B76B85AA385}.Debug|x64.ActiveCfg = Debug|x64
+		{41EEB5F9-370F-49D7-84A4-5B76B85AA385}.Debug|x64.Build.0 = Debug|x64
+		{41EEB5F9-370F-49D7-84A4-5B76B85AA385}.Release|x64.ActiveCfg = Release|x64
+		{41EEB5F9-370F-49D7-84A4-5B76B85AA385}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
