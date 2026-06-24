@@ -11,6 +11,7 @@ in vec3 crntPos;   // Fragment position in world space (needed to compute light 
 
 // ── Uniforms set from the CPU ────────────────────────────────────────────────
 uniform sampler2D tex0;   // Diffuse/albedo texture
+uniform sampler2D tex1;   // Specular map texture (optional)
 uniform vec4 lightColor;  // RGBA color of the light source
 uniform vec3 lightPos;    // World-space position of the point light
 uniform vec3 camPos;      // World-space camera position (required for specular view direction)
@@ -64,6 +65,6 @@ void main()
 	// multiplied by the light's own colour. Adding ambient + diffuse + specular
 	// together is the core of the Phong shading model.
 	vec4 texColor = texture(tex0, texCoord);
-	vec4 lighting = (ambient + diffuse + specular) * lightColor;
-	FragColor = texColor * lighting;
+	float specMap = texture(tex1, texCoord).r;
+	FragColor = (texColor * (diffuse + ambient) + specMap * specular) * lightColor;
 }

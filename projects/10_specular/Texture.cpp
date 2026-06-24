@@ -45,9 +45,11 @@ namespace
 			}
 		}
 
+		const char* failureReason = stbi_failure_reason();
 		throw runtime_error(
 			string("Failed to load texture: ") + image +
-			" (working directory: " + get_working_directory() + ")"
+			" (working directory: " + get_working_directory() + ", reason: " +
+			(failureReason != nullptr ? failureReason : "unknown") + ")"
 		);
 	}
 }
@@ -84,8 +86,26 @@ Texture::Texture(const char* image, GLenum texType, GLuint slot, GLenum format, 
 	// float flatColor[] = {1.0f, 1.0f, 1.0f, 1.0f};
 	// glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, flatColor);
 
+	// Infer the image format from channel count so RGB and RGBA sources are handled correctly.
+	if (numColCh == 4)
+	{
+		format = GL_RGBA;
+	}
+	else if (numColCh == 3)
+	{
+		format = GL_RGB;
+	}
+	else if (numColCh == 1)
+	{
+		format = GL_RED;
+	}
+	else
+	{
+		throw std::invalid_argument("Automatic Texture type recognition failed");
+	}
+
 	// Assigns the image to the OpenGL Texture object
-	glTexImage2D(texType, 0, GL_RGBA, widthImg, heightImg, 0, format, pixelType, bytes);
+	glTexImage2D(texType, 0, format, widthImg, heightImg, 0, format, pixelType, bytes);
 	// Generates MipMaps
 	glGenerateMipmap(texType);
 

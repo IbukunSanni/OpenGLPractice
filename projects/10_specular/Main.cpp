@@ -17,7 +17,7 @@
 const unsigned int width = 800;
 const unsigned int height = 800;
 
-// Vertices coordinates
+// Plane vertex coordinates
 GLfloat vertices[] =
 { //     COORDINATES     /        COLORS        /    TexCoord    /       NORMALS     //
 	-1.0f, 0.0f,  1.0f,		0.0f, 0.0f, 0.0f,		0.0f, 0.0f,		0.0f, 1.0f, 0.0f,
@@ -62,7 +62,7 @@ GLuint lightIndices[] =
 	4, 6, 7
 };
 
-int main()
+int run()
 {
 	// ── GLFW initialisation ────────────────────────────────────────────────
 	glfwInit();
@@ -122,7 +122,7 @@ int main()
 	EBO1.Unbind();
 
 	// Compile and link the light-cube shaders (light.vert / light.frag).
-	// These are kept separate from the pyramid shaders so the cube can render
+	// These are kept separate from the plane shaders so the cube can render
 	// as a plain solid colour independent of the Phong lighting calculation.
 	Shader lightShader("light.vert", "light.frag");
 
@@ -140,7 +140,7 @@ int main()
 	lightVBO.Unbind();
 	lightEBO.Unbind();
 
-	// ── Light and pyramid transforms (initial / pre-loop setup) ─────────────
+	// ── Light and plane transforms (initial / pre-loop setup) ────────────────
 	// These values are used once here to push the initial uniforms to both
 	// shaders before the render loop starts. Inside the loop, local copies
 	// shadow these — see the per-frame update comment below.
@@ -149,9 +149,9 @@ int main()
 	glm::mat4 lightModel = glm::mat4(1.0f);
 	lightModel = glm::translate(lightModel, lightPos); // Place the light cube at lightPos
 
-	glm::vec3 pyramidPos = glm::vec3(0.0f, 0.0f, 0.0f); // Pyramid sits at the world origin
-	glm::mat4 pyramidModel = glm::mat4(1.0f);
-	pyramidModel = glm::translate(pyramidModel, pyramidPos);
+	glm::vec3 planePos = glm::vec3(0.0f, 0.0f, 0.0f); // Plane sits at the world origin
+	glm::mat4 planeModel = glm::mat4(1.0f);
+	planeModel = glm::translate(planeModel, planePos);
 
 	lightShader.Activate();
 	// Set the light cube's model transform and visible color.
@@ -159,8 +159,8 @@ int main()
 	glUniform4f(glGetUniformLocation(lightShader.ID, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
 
 	shaderProgram.Activate();
-	// Send light parameters used by the pyramid lighting calculations.
-	glUniformMatrix4fv(glGetUniformLocation(shaderProgram.ID, "model"), 1, GL_FALSE, glm::value_ptr(pyramidModel));
+	// Send light parameters used by the plane lighting calculations.
+	glUniformMatrix4fv(glGetUniformLocation(shaderProgram.ID, "model"), 1, GL_FALSE, glm::value_ptr(planeModel));
 	glUniform4f(glGetUniformLocation(shaderProgram.ID, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
 	glUniform3f(glGetUniformLocation(shaderProgram.ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
 
@@ -168,10 +168,11 @@ int main()
 	// ── Texture ───────────────────────────────────────────────────────────
 	// Loads the image, uploads it to texture unit 0, and binds the sampler uniform "tex0"
 	// Pass the slot as a plain index (0 = GL_TEXTURE0); Texture internally computes GL_TEXTURE0 + slot.
-	// green_plane.jpg is a JPEG (3 channels), so use GL_RGB as the pixel format.
-	// Using GL_RGBA here would make glTexImage2D read 4 bytes per pixel from a 3-byte buffer, causing a crash.
-	Texture brickTex("Assets/Textures/green_plane.jpg", GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE);
-	brickTex.texUnit(shaderProgram, "tex0", 0);
+	// planks.png is the diffuse/albedo texture for the floor plane.
+	Texture plankTex("Assets/Textures/planks.png", GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE);
+	plankTex.texUnit(shaderProgram, "tex0", 0);
+	Texture plankSpec("Assets/Textures/planksSpec.png", GL_TEXTURE_2D, 1, GL_RGBA, GL_UNSIGNED_BYTE);
+	plankSpec.texUnit(shaderProgram, "tex1", 1);
 
 	// Depth testing ensures back faces do not overdraw front faces
 	glEnable(GL_DEPTH_TEST);
@@ -188,22 +189,23 @@ int main()
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// Per-frame model matrix rebuild — local variables shadow the pre-loop ones.
-		// Keeping this here makes it straightforward to animate the light or pyramid
+		// Keeping this here makes it straightforward to animate the light or plane
 		// later (e.g. multiply by glfwGetTime()).
 		glm::vec3 lightPos = glm::vec3(0.5f, 0.5f, 0.5f);
 		glm::mat4 lightModel = glm::mat4(1.0f);
 		lightModel = glm::translate(lightModel, lightPos); // Cube follows lightPos each frame
 
-		glm::vec3 pyramidPos = glm::vec3(0.0f, 0.0f, 0.0f);
-		glm::mat4 pyramidModel = glm::mat4(1.0f);
-		pyramidModel = glm::translate(pyramidModel, pyramidPos);
+		glm::vec3 planePos = glm::vec3(0.0f, 0.0f, 0.0f);
+		glm::mat4 planeModel = glm::mat4(1.0f);
+		planeModel = glm::translate(planeModel, planePos);
 
 		lightShader.Activate();
 		// Update only the model matrix for the light cube draw.
 		glUniformMatrix4fv(glGetUniformLocation(lightShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(lightModel));
 
 		shaderProgram.Activate();
-		glUniformMatrix4fv(glGetUniformLocation(shaderProgram.ID, "model"), 1, GL_FALSE, glm::value_ptr(pyramidModel));
+		glUniformMatrix4fv(glGetUniformLocation(shaderProgram.ID, "model"), 1, GL_FALSE, glm::value_ptr(planeModel));
+		glUniform3f(glGetUniformLocation(shaderProgram.ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
 
 		// Handles camera inputs
 		camera.Inputs(window);
@@ -223,10 +225,11 @@ int main()
 		glDrawElements(GL_TRIANGLES, sizeof(lightIndices) / sizeof(GLuint), GL_UNSIGNED_INT, 0);
 
 		shaderProgram.Activate();
-		brickTex.Bind(); // Bind texture before the draw call
+		plankTex.Bind(); // Bind texture before the draw call
+		plankSpec.Bind(); // Bind specular map before the draw call
 		VAO1.Bind();     // Restore vertex format
 
-		// Draw all 6 triangles (12 indices) using the EBO index list
+		// Draw the plane's 2 triangles (6 indices) using the EBO index list
 		glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(GLuint), GL_UNSIGNED_INT, 0);
 
 		glfwSwapBuffers(window); // Present the finished frame
@@ -240,10 +243,24 @@ int main()
 	lightVAO.Delete();
 	lightVBO.Delete();
 	lightEBO.Delete();
-	brickTex.Delete();
+	plankTex.Delete();
+	plankSpec.Delete();
 	lightShader.Delete();
 	shaderProgram.Delete();
 	glfwDestroyWindow(window);
 	glfwTerminate();
 	return 0;
+}
+
+int main()
+{
+	try
+	{
+		return run();
+	}
+	catch (const std::exception& exception)
+	{
+		std::cerr << "Application error: " << exception.what() << std::endl;
+		return -1;
+	}
 }

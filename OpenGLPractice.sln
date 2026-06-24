@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.6.11828.311 oobstable
+VisualStudioVersion = 18.6.11828.311
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "projects", "projects", "{E0000000-0000-0000-0000-000000000000}"
 EndProject
@@ -13,7 +13,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "texture_test", "projects\te
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "09_lighting", "projects\09_lighting\09_lighting.vcxproj", "{8B3618C9-6908-4BAE-9AC9-457F0313F94A}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "08_Camera", "projects\08_Camera\08_Camera.vcxproj", "{710A4C90-14A4-48C3-9552-1A3D318565AC}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "10_specular", "projects\10_specular\10_specular.vcxproj", "{3F9400EB-A30A-4944-B3C2-3DED19A7D4BB}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "NewFolder1", "NewFolder1", "{6E20C3A7-472C-4E83-8BCE-D00CA1F60562}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -37,10 +39,10 @@ Global
 		{8B3618C9-6908-4BAE-9AC9-457F0313F94A}.Debug|x64.Build.0 = Debug|x64
 		{8B3618C9-6908-4BAE-9AC9-457F0313F94A}.Release|x64.ActiveCfg = Release|x64
 		{8B3618C9-6908-4BAE-9AC9-457F0313F94A}.Release|x64.Build.0 = Release|x64
-		{710A4C90-14A4-48C3-9552-1A3D318565AC}.Debug|x64.ActiveCfg = Debug|x64
-		{710A4C90-14A4-48C3-9552-1A3D318565AC}.Debug|x64.Build.0 = Debug|x64
-		{710A4C90-14A4-48C3-9552-1A3D318565AC}.Release|x64.ActiveCfg = Release|x64
-		{710A4C90-14A4-48C3-9552-1A3D318565AC}.Release|x64.Build.0 = Release|x64
+		{3F9400EB-A30A-4944-B3C2-3DED19A7D4BB}.Debug|x64.ActiveCfg = Debug|x64
+		{3F9400EB-A30A-4944-B3C2-3DED19A7D4BB}.Debug|x64.Build.0 = Debug|x64
+		{3F9400EB-A30A-4944-B3C2-3DED19A7D4BB}.Release|x64.ActiveCfg = Release|x64
+		{3F9400EB-A30A-4944-B3C2-3DED19A7D4BB}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
