@@ -68,6 +68,7 @@ public:
 	// TODO: update Matrix to both updateMatrix and Matrix, so the camera matrix can be queried without uploading to a shader.
 	void UpdateMatrix(float FOVdeg, float nearPlane, float farPlane);
 	void Matrix(Shader& shader, const char* uniform);
+	void SetView(const glm::vec3& position, const glm::vec3& direction);
 
 	// Polls GLFW keyboard and mouse state then moves/rotates the camera:
 	//   MMB drag         — orbit around the focus point

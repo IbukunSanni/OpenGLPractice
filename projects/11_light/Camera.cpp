@@ -30,6 +30,13 @@ void Camera::Matrix(Shader& shader, const char* uniform)
 	glUniformMatrix4fv(glGetUniformLocation(shader.ID, uniform), 1, GL_FALSE, glm::value_ptr(cameraMatrix));
 }
 
+void Camera::SetView(const glm::vec3& position, const glm::vec3& direction)
+{
+	Position = position;
+	Orientation = glm::normalize(direction);
+	focusPoint = Position + Orientation;
+}
+
 void Camera::UpdateMatrix(float FOVdeg, float nearPlane, float farPlane)
 {
 	// Create an identity matrix for the view matrix.

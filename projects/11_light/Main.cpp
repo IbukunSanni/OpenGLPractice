@@ -1,5 +1,7 @@
 #include <iostream>
 #include <exception>
+#include <iomanip>
+#include <sstream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <stb/stb_image.h>
@@ -45,6 +47,7 @@ GLfloat lightVertices[] =
 	 0.1f,  0.1f,  0.1f
 };
 
+
 // 12 triangles (36 indices) forming a cube for the light source marker.
 GLuint lightIndices[] =
 {
@@ -61,6 +64,7 @@ GLuint lightIndices[] =
 	4, 5, 6,
 	4, 6, 7
 };
+
 
 int run()
 {
@@ -179,7 +183,12 @@ int run()
 
 	// Creates camera object
 	Camera camera(width, height, glm::vec3(0.0f, 0.0f, 2.0f));
+	camera.SetView(glm::vec3(-2.0f, 2.0f, -2.0f), glm::vec3(0.5f, -0.5f, 0.5f));
 	camera.AttachToWindow(window);
+
+	std::cout << "Default camera viewpoint:" << std::endl;
+	std::cout << "  Position  = (" << camera.Position.x << ", " << camera.Position.y << ", " << camera.Position.z << ")" << std::endl;
+	std::cout << "  Direction = (" << camera.Orientation.x << ", " << camera.Orientation.y << ", " << camera.Orientation.z << ")" << std::endl;
 
 	// ── Render loop ───────────────────────────────────────────────────────
 	while (!glfwWindowShouldClose(window))
@@ -217,6 +226,12 @@ int run()
 		// can compute the view direction for the specular highlight calculation.
 		glUniform3f(glGetUniformLocation(shaderProgram.ID, "camPos"), camera.Position.x, camera.Position.y, camera.Position.z);
 		camera.Matrix(shaderProgram, "camMatrix");
+
+		std::ostringstream titleStream;
+		titleStream << std::fixed << std::setprecision(2)
+			<< "11_light | Pos(" << camera.Position.x << ", " << camera.Position.y << ", " << camera.Position.z << ") "
+			<< "Dir(" << camera.Orientation.x << ", " << camera.Orientation.y << ", " << camera.Orientation.z << ")";
+		glfwSetWindowTitle(window, titleStream.str().c_str());
 
 		lightShader.Activate();
 		camera.Matrix(lightShader, "camMatrix");
