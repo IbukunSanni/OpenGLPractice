@@ -2,12 +2,12 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="Main.cpp" />
-    <ClCompile Include="..\..\glad.c" />
-    <ClCompile Include="..\..\shaderClass.cpp" />
-    <ClCompile Include="..\..\VAO.cpp" />
-    <ClCompile Include="..\..\VBO.cpp" />
-    <ClCompile Include="..\..\EBO.cpp" />
-    <ClCompile Include="..\..\stb.cpp" />
+    <ClCompile Include="glad.c" />
+    <ClCompile Include="shaderClass.cpp" />
+    <ClCompile Include="VAO.cpp" />
+    <ClCompile Include="VBO.cpp" />
+    <ClCompile Include="EBO.cpp" />
+    <ClCompile Include="stb.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="Camera.cpp" />
   </ItemGroup>
@@ -15,22 +15,22 @@
     <ClInclude Include="Camera.h">
       <Filter>Header_Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\EBO.h">
+    <ClInclude Include="EBO.h">
       <Filter>Header_Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\shaderClass.h">
+    <ClInclude Include="shaderClass.h">
       <Filter>Header_Files</Filter>
     </ClInclude>
     <ClInclude Include="Texture.h">
       <Filter>Header_Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\VAO.h">
+    <ClInclude Include="VAO.h">
       <Filter>Header_Files</Filter>
     </ClInclude>
     <ClInclude Include="Mesh.h">
       <Filter>Header_Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\VBO.h">
+    <ClInclude Include="VBO.h">
       <Filter>Header_Files</Filter>
     </ClInclude>
   </ItemGroup>
