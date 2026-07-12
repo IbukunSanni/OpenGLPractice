@@ -12,12 +12,27 @@
     <ClCompile Include="Camera.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\shaderClass.h" />
-    <ClInclude Include="..\..\VAO.h" />
-    <ClInclude Include="..\..\VBO.h" />
-    <ClInclude Include="..\..\EBO.h" />
-    <ClInclude Include="Texture.h" />
-    <ClInclude Include="Camera.h" />
+    <ClInclude Include="Camera.h">
+      <Filter>Header_Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\EBO.h">
+      <Filter>Header_Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\shaderClass.h">
+      <Filter>Header_Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Texture.h">
+      <Filter>Header_Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\VAO.h">
+      <Filter>Header_Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Mesh.h">
+      <Filter>Header_Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\VBO.h">
+      <Filter>Header_Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="default.frag">
@@ -42,6 +57,9 @@
     </Filter>
     <Filter Include="Resources\Textures">
       <UniqueIdentifier>{12429a19-b902-4d62-a16d-e0b2e873904f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header_Files">
+      <UniqueIdentifier>{da07b3f3-0e92-4f09-97a9-3fb336cac850}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

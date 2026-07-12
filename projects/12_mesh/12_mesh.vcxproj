@@ -13,7 +13,7 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{41EEB5F9-370F-49D7-84A4-5B76B85AA385}</ProjectGuid>
+    <ProjectGuid>{9B01D2B8-BC64-4FD1-95B2-925CA268F4F0}</ProjectGuid>
     <RootNamespace>lighting</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
@@ -49,20 +49,21 @@
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Main.cpp" />
-    <ClCompile Include="..\..\glad.c" />
-    <ClCompile Include="..\..\shaderClass.cpp" />
-    <ClCompile Include="..\..\VAO.cpp" />
-    <ClCompile Include="..\..\VBO.cpp" />
-    <ClCompile Include="..\..\EBO.cpp" />
-    <ClCompile Include="..\..\stb.cpp" />
+    <ClCompile Include="glad.c" />
+    <ClCompile Include="shaderClass.cpp" />
+    <ClCompile Include="VAO.cpp" />
+    <ClCompile Include="VBO.cpp" />
+    <ClCompile Include="EBO.cpp" />
+    <ClCompile Include="stb.cpp" />
     <ClCompile Include="Texture.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\shaderClass.h" />
-    <ClInclude Include="..\..\VAO.h" />
-    <ClInclude Include="..\..\VBO.h" />
-    <ClInclude Include="..\..\EBO.h" />
+    <ClInclude Include="shaderClass.h" />
+    <ClInclude Include="VAO.h" />
+    <ClInclude Include="VBO.h" />
+    <ClInclude Include="EBO.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="Mesh.h" />
     <ClInclude Include="Texture.h" />
   </ItemGroup>
   <ItemGroup>
