@@ -1,7 +1,7 @@
 #pragma once
-#define MESH_CLASS_H
 
-#include<string>
+#include <string>
+#include <vector>
 
 #include "VAO.h"
 #include "EBO.h"
@@ -11,19 +11,15 @@
 class Mesh
 {
 public: 
-	std::vector <Vertex> vertices;
-	std::vector <GLuint> indices;
-	std::vector <Texture> textures;
+	std::vector<Vertex> vertices;
+	std::vector<GLuint> indices;
+	std::vector<Texture> textures;
 
-	// Store VAO in public so it can be used in the Draw function
+	// The VAO stores this mesh's vertex layout and element-buffer binding.
 	VAO VAO;
 
-	// Initializes the mesh
-	Mesh(std::vector <Vertex>& vertices, std::vector <GLuint>& indices, std::vector <Texture>& textures);
+	Mesh(const std::vector<Vertex>& vertices, const std::vector<GLuint>& indices, const std::vector<Texture>& textures);
 
-	// Draws the mesh
+	// Binds this mesh's textures and submits its indexed triangles.
 	void Draw(Shader& shader, Camera& camera);
-
-
-	EBO ebo;
 };

@@ -68,6 +68,7 @@
     <ClInclude Include="Texture.h" />
   </ItemGroup>
   <ItemGroup>
+	<None Include="CODE_WALKTHROUGH.md" />
     <None Include="default.vert" />
     <None Include="default.frag" />
     <None Include="light.frag" />

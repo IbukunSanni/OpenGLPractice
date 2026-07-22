@@ -56,6 +56,9 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+	<None Include="CODE_WALKTHROUGH.md">
+	  <Filter>Documentation</Filter>
+	</None>
     <None Include="default.frag">
       <Filter>Resources\Shaders</Filter>
     </None>
@@ -85,6 +88,9 @@
     <Filter Include="Source_Files">
       <UniqueIdentifier>{98d42cda-558a-471c-a6de-14dec881a579}</UniqueIdentifier>
     </Filter>
+	<Filter Include="Documentation">
+	  <UniqueIdentifier>{8f1f2c0e-2540-4cbe-a66f-740ef9cb51bf}</UniqueIdentifier>
+	</Filter>
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\..\Assets\Textures\mario_jump.png" />

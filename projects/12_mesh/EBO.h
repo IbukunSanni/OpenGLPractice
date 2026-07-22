@@ -8,8 +8,8 @@ class EBO
 public:
 	// ID reference of Elements Buffer Object
 	GLuint ID;
-	// Constructor that generates an Element Buffer Object and uploads indices to the GPU
-	EBO(std::vector<GLuint>& indices);
+	// Uploads triangle indices to GL_ELEMENT_ARRAY_BUFFER.
+	EBO(const std::vector<GLuint>& indices);
 
 	// Binds the EBO
 	void Bind();
