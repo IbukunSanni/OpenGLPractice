@@ -65,6 +65,7 @@
     <ClInclude Include="EBO.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Mesh.h" />
+    <ClInclude Include="Model.h" />
     <ClInclude Include="Texture.h" />
   </ItemGroup>
   <ItemGroup>

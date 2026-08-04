@@ -51,6 +51,9 @@
     <ClInclude Include="Mesh.h">
       <Filter>Header_Files</Filter>
     </ClInclude>
+    <ClInclude Include="Model.h">
+      <Filter>Header_Files</Filter>
+    </ClInclude>
     <ClInclude Include="VBO.h">
       <Filter>Header_Files</Filter>
     </ClInclude>
