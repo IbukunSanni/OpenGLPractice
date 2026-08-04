@@ -7,6 +7,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "projects", "projects", "{E0
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "12_mesh", "projects\12_mesh\12_mesh.vcxproj", "{9B01D2B8-BC64-4FD1-95B2-925CA268F4F0}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "13_model_loading", "projects\13_model_loading\13_model_loading.vcxproj", "{C416495C-3AE2-4A51-9F13-70C1577CC545}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -17,6 +19,10 @@ Global
 		{9B01D2B8-BC64-4FD1-95B2-925CA268F4F0}.Debug|x64.Build.0 = Debug|x64
 		{9B01D2B8-BC64-4FD1-95B2-925CA268F4F0}.Release|x64.ActiveCfg = Release|x64
 		{9B01D2B8-BC64-4FD1-95B2-925CA268F4F0}.Release|x64.Build.0 = Release|x64
+		{C416495C-3AE2-4A51-9F13-70C1577CC545}.Debug|x64.ActiveCfg = Debug|x64
+		{C416495C-3AE2-4A51-9F13-70C1577CC545}.Debug|x64.Build.0 = Debug|x64
+		{C416495C-3AE2-4A51-9F13-70C1577CC545}.Release|x64.ActiveCfg = Release|x64
+		{C416495C-3AE2-4A51-9F13-70C1577CC545}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
