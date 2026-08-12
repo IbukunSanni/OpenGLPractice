@@ -22,6 +22,11 @@ namespace {
 		unsigned int count,
 		std::vector<GLuint>& indices)
 	{
+		const std::size_t bytesRequired = static_cast<std::size_t>(count) * sizeof(T);
+		if (beginningOfData > data.size() || bytesRequired > data.size() - beginningOfData)
+			throw std::out_of_range("Index accessor reads past the end of the model buffer");
+
+		indices.reserve(count);
 		for (unsigned int i = 0; i < count; i++)
 		{
 			T value{};
@@ -39,7 +44,13 @@ Model::Model(const char* file) {
 	Model::file = file;
 	data = getData();
 
-	traverseNode(0);
+	const unsigned int sceneIndex = JSON.value("scene", 0u);
+	const json& rootNodes = JSON.at("scenes").at(sceneIndex).at("nodes");
+	if (rootNodes.empty())
+		throw std::runtime_error("The selected glTF scene has no root nodes");
+
+	for (const json& rootNode : rootNodes)
+		traverseNode(rootNode.get<unsigned int>());
 
 }
 
@@ -112,6 +123,9 @@ void Model::traverseNode(unsigned int nextNode, glm::mat4 matrix) {
 
 	glm::mat4 matNode = glm::mat4(1.0f);
 	if (node.find("matrix") != node.end()) {
+		if (node["matrix"].size() != 16)
+			throw std::runtime_error("A glTF node matrix must contain exactly 16 values");
+
 		float matValues[16];
 		for (unsigned int i = 0; i < node["matrix"].size(); i++)
 			matValues[i] = (node["matrix"][i]);
@@ -167,7 +181,7 @@ std::vector<unsigned char> Model::getData() {
 std::vector<float> Model::getFloats(json accessor) {
 	std::vector<float> floatVec;
 
-	unsigned int buffViewInd = accessor.value("bufferView", 1);
+	unsigned int buffViewInd = accessor.at("bufferView");
 	unsigned int count = accessor["count"];
 	unsigned int accByteOffset = accessor.value("byteOffset", 0);
 	std::string type = accessor["type"];
@@ -189,6 +203,9 @@ std::vector<float> Model::getFloats(json accessor) {
 	// Go over all the bytes in the data at the correct place using the properties from above
 	unsigned int beginningOfData = byteOffset + accByteOffset;
 	unsigned int lengthOfData = count * 4 * numPerVert;
+	if (beginningOfData > data.size() || lengthOfData > data.size() - beginningOfData)
+		throw std::out_of_range("Vertex accessor reads past the end of the model buffer");
+
 	for (unsigned int i = beginningOfData; i < beginningOfData + lengthOfData; i += 4)
 	{
 		unsigned char bytes[] = { data[i], data[i + 1], data[i + 2], data[i + 3] };
@@ -204,7 +221,7 @@ std::vector<float> Model::getFloats(json accessor) {
 std::vector<GLuint> Model::getIndices(json accessor) {
 	std::vector<GLuint> indices;
 
-	unsigned int buffViewInd = accessor.value("bufferView", 0);
+	unsigned int buffViewInd = accessor.at("bufferView");
 	unsigned int count = accessor["count"];
 	unsigned int accByteOffset = accessor.value("byteOffset", 0);
 	unsigned int componentType = accessor["componentType"];
@@ -227,13 +244,13 @@ std::vector<GLuint> Model::getIndices(json accessor) {
 		readIndicesAs<unsigned short>(data, beginningOfData, count, indices);
 		break;
 
-	case GLTF_COMPONENT_SHORT:
-		readIndicesAs<short>(data, beginningOfData, count, indices);
+	case GLTF_COMPONENT_UNSIGNED_BYTE:
+		readIndicesAs<unsigned char>(data, beginningOfData, count, indices);
 		break;
 
 	default:
 		throw std::invalid_argument(
-			"Index componentType is invalid (not UNSIGNED_INT, UNSIGNED_SHORT, or SHORT)");
+			"Index componentType must be UNSIGNED_BYTE, UNSIGNED_SHORT, or UNSIGNED_INT");
 	}
 	
 	return indices;
@@ -296,7 +313,11 @@ std::vector<Vertex> Model::assembleVertices(
 	std::vector<glm::vec3> normals,
 	std::vector<glm::vec2> texUVs
 ) {
+	if (positions.size() != normals.size() || positions.size() != texUVs.size())
+		throw std::runtime_error("Position, normal, and texture-coordinate counts do not match");
+
 	std::vector<Vertex> vertices;
+	vertices.reserve(positions.size());
 	for (int i = 0; i < positions.size(); i++) {
 
 		vertices.push_back(
