@@ -1,5 +1,6 @@
 #include "Model.h"
 
+// TODO: for string constants need to be added, for ease of expalanation and more readability
 namespace {
 	// glTF 2.0 accessor component types. These are spec-defined values and
 	// happen to be identical to the matching OpenGL enums.
@@ -55,7 +56,7 @@ void Model::loadMesh(unsigned int indMesh) {
 	unsigned int texAccInd = JSON["meshes"][indMesh]["primitives"][0]["attributes"]["TEXCOORD_0"];
 	unsigned int indAccInd = JSON["meshes"][indMesh]["primitives"][0]["indices"];
 
-	std::vector<float> posVec = getFloats(JSON["acessors"][posAccInd]);
+	std::vector<float> posVec = getFloats(JSON["accessors"][posAccInd]);
 	std::vector<glm::vec3> positions = groupFloatsVec3(posVec);
 	std::vector<float> normalVec = getFloats(JSON["accessors"][normalAccInd]);
 	std::vector<glm::vec3> normals = groupFloatsVec3(normalVec);
@@ -171,7 +172,7 @@ std::vector<float> Model::getFloats(json accessor) {
 	unsigned int accByteOffset = accessor.value("byteOffset", 0);
 	std::string type = accessor["type"];
 
-	json bufferView = JSON["bufferView"][buffViewInd];
+	json bufferView = JSON["bufferViews"][buffViewInd];
 	unsigned int byteOffset = bufferView["byteOffset"];
 
 	// Interpret the type and store it into numPerVert
@@ -236,3 +237,114 @@ std::vector<GLuint> Model::getIndices(json accessor) {
 
 }
 
+std::vector<Texture> Model::getTextures() {
+	std::vector<Texture> textures;
+
+	std::string fileStr = std::string(file);
+	std::string fileDirectory = fileStr.substr(0, fileStr.find_last_of('/') + 1);
+
+	for (unsigned int i = 0; i < JSON["images"].size(); i++) {
+		std::string texPath = JSON["images"][i]["uri"];
+
+		// Reuse an already-loaded texture if this URI has been seen before.
+		bool skip = false;
+		for (unsigned int j = 0; j < loadedTexName.size(); j++) {
+			if (loadedTexName[j] == texPath)
+			{
+				textures.push_back(loadedTex[j]);
+				skip = true;
+				break;
+			}
+		}
+
+		// This must sit outside the dedup loop above: on the first image
+		// loadedTexName is empty, so a nested check would never execute and no
+		// texture would ever be loaded.
+		if (!skip)
+		{
+			// The texture unit is the index this texture will occupy in loadedTex.
+			const GLuint textureUnit = static_cast<GLuint>(loadedTex.size());
+
+			// Load diffuse texture
+			if (texPath.find("baseColor") != std::string::npos)
+			{
+				Texture diffuse = Texture((fileDirectory + texPath).c_str(), "diffuse", textureUnit);
+				textures.push_back(diffuse);
+				loadedTex.push_back(diffuse);
+				loadedTexName.push_back(texPath);
+			}
+			// Load specular texture
+			else if (texPath.find("metallicRoughness") != std::string::npos)
+			{
+				Texture specular = Texture((fileDirectory + texPath).c_str(), "specular", textureUnit);
+				textures.push_back(specular);
+				loadedTex.push_back(specular);
+				loadedTexName.push_back(texPath);
+			}
+		}
+	}
+
+	return textures;
+
+}
+
+std::vector<Vertex> Model::assembleVertices(
+	std::vector<glm::vec3> positions,
+	std::vector<glm::vec3> normals,
+	std::vector<glm::vec2> texUVs
+) {
+	std::vector<Vertex> vertices;
+	for (int i = 0; i < positions.size(); i++) {
+
+		vertices.push_back(
+			Vertex
+			{
+				positions[i],
+				normals[i],
+				glm::vec3(1.0f, 1.0f, 1.0f),
+				texUVs[i]
+
+			}
+		);
+
+	}
+	return vertices;
+
+}
+
+std::vector<glm::vec2> Model::groupFloatsVec2(std::vector<float> floatVec) {
+	const unsigned int floatsPerVector = 2;
+
+	std::vector<glm::vec2> vectors;
+
+	assert(floatVec.size() % floatsPerVector == 0);
+
+	for (unsigned int i = 0; i < floatVec.size(); i += floatsPerVector)
+	{
+		vectors.emplace_back(
+			floatVec[i],
+			floatVec[i + 1]
+		);
+	}
+
+	return vectors;
+}
+
+std::vector<glm::vec3> Model::groupFloatsVec3(std::vector<float> floatVec) {
+	const unsigned int floatsPerVector = 3;
+
+	std::vector<glm::vec3> vectors;
+
+	assert(floatVec.size() % floatsPerVector == 0);
+
+	for (unsigned int i = 0; i < floatVec.size(); i += floatsPerVector)
+	{
+		vectors.emplace_back(
+			floatVec[i],
+			floatVec[i + 1],
+			floatVec[i + 2]
+		);
+	}
+
+	return vectors;
+}

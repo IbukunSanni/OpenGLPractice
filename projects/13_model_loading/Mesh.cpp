@@ -19,7 +19,13 @@ Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<GLuint>& indic
 	ebo.Unbind();
 }
 
-void Mesh::Draw(Shader& shader, Camera& camera)
+void Mesh::Draw(
+	Shader& shader,
+	Camera& camera,
+	glm::mat4 matrix,
+	glm::vec3 translation,
+	glm::quat rotation,
+	glm::vec3 scale)
 {
 	shader.Activate();
 	VAO.Bind();
@@ -49,7 +55,20 @@ void Mesh::Draw(Shader& shader, Camera& camera)
 	glUniform3f(glGetUniformLocation(shader.ID, "camPos"), camera.Position.x, camera.Position.y, camera.Position.z);
 	camera.Matrix(shader, "camMatrix");
 
-	// ASK: how does it know to draw the indices in here, from the EBO
+	// The vertex shader multiplies model * translation * rotation * scale, so all
+	// four must be uploaded. Model bakes the node hierarchy into 'matrix' and
+	// leaves the other three at identity; a standalone Mesh leaves all four at
+	// identity unless the caller overrides them.
+	glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), translation);
+	glm::mat4 rotationMatrix = glm::mat4_cast(rotation);
+	glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), scale);
 
+	glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"),       1, GL_FALSE, glm::value_ptr(matrix));
+	glUniformMatrix4fv(glGetUniformLocation(shader.ID, "translation"), 1, GL_FALSE, glm::value_ptr(translationMatrix));
+	glUniformMatrix4fv(glGetUniformLocation(shader.ID, "rotation"),    1, GL_FALSE, glm::value_ptr(rotationMatrix));
+	glUniformMatrix4fv(glGetUniformLocation(shader.ID, "scale"),       1, GL_FALSE, glm::value_ptr(scaleMatrix));
+
+	// The VAO retains the EBO binding made in the constructor, so glDrawElements
+	// sources its indices from that element buffer.
 	glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indices.size()), GL_UNSIGNED_INT, 0);
 }
