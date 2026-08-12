@@ -173,7 +173,9 @@ std::vector<float> Model::getFloats(json accessor) {
 	std::string type = accessor["type"];
 
 	json bufferView = JSON["bufferViews"][buffViewInd];
-	unsigned int byteOffset = bufferView["byteOffset"];
+	// byteOffset is optional in glTF and defaults to 0. Reading it directly
+	// throws type_error.302 on the many exporters that omit it.
+	unsigned int byteOffset = bufferView.value("byteOffset", 0);
 
 	// Interpret the type and store it into numPerVert
 	unsigned int numPerVert;
@@ -208,7 +210,8 @@ std::vector<GLuint> Model::getIndices(json accessor) {
 	unsigned int componentType = accessor["componentType"];
 
 	json bufferView = JSON["bufferViews"][buffViewInd];
-	unsigned int byteOffset = bufferView["byteOffset"];
+	// byteOffset is optional in glTF and defaults to 0 (see getFloats above).
+	unsigned int byteOffset = bufferView.value("byteOffset", 0);
 
 	unsigned int beginningOfData = byteOffset + accByteOffset;
 
