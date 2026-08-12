@@ -53,7 +53,7 @@ void Model::Draw(Shader& shader, Camera& camera) {
 void Model::loadMesh(unsigned int indMesh) {
 	unsigned int posAccInd = JSON["meshes"][indMesh]["primitives"][0]["attributes"]["POSITION"];
 	unsigned int normalAccInd = JSON["meshes"][indMesh]["primitives"][0]["attributes"]["NORMAL"];
-	unsigned int texAccInd = JSON["meshes"][indMesh]["primitives"][0]["attributes"]["TEXCOORD_0"];
+	unsigned int texAccInd = JSON["meshes"][indMesh]["primitives"][0]["attributes"]["TEXCOORD_1"];
 	unsigned int indAccInd = JSON["meshes"][indMesh]["primitives"][0]["indices"];
 
 	std::vector<float> posVec = getFloats(JSON["accessors"][posAccInd]);
