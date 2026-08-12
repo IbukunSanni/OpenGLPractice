@@ -11,15 +11,13 @@ constexpr unsigned int width  = 800;
 constexpr unsigned int height = 800;
 
 // ── Model asset ───────────────────────────────────────────────────────────────
-// PLACEHOLDER: point this at a .gltf file once you have one on disk.
-//
 // Use FORWARD slashes. Model::getData() and Model::getTextures() locate the
 // companion .bin and texture files by splitting this string on '/', so a path
 // written with backslashes resolves to an empty directory and the model's
 // buffers silently fail to load. Windows accepts forward slashes fine.
 const std::string assetDirectory =
 	"C:/Users/Ibukunoluwa/Documents/Coding/C-C++/OpenGL-VSstudio/OpenGLPractice/Assets";
-const std::string modelPath = assetDirectory + "/Models/bunny/scene.gltf";
+const std::string modelPath = assetDirectory + "/Models/autumn_sword/scene.gltf";
 
 // ── run() ─────────────────────────────────────────────────────────────────────
 // Separated from main() so every early-return path is caught by the try/catch
