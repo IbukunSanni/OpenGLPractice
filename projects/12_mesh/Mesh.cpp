@@ -49,5 +49,7 @@ void Mesh::Draw(Shader& shader, Camera& camera)
 	glUniform3f(glGetUniformLocation(shader.ID, "camPos"), camera.Position.x, camera.Position.y, camera.Position.z);
 	camera.Matrix(shader, "camMatrix");
 
+	// ASK: how does it know to draw the indices in here, from the EBO
+
 	glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indices.size()), GL_UNSIGNED_INT, 0);
 }

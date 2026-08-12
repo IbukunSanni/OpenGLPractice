@@ -71,7 +71,7 @@ int run()
 
 	shaderProgram.Activate();
 	glUniform4f(glGetUniformLocation(shaderProgram.ID, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
-	glUniform3f(glGetUniformLocation(shaderProgram.ID, "lightPosition"),   lightPos.x,   lightPos.y,   lightPos.z);
+	glUniform3f(glGetUniformLocation(shaderProgram.ID, "lightPos"),   lightPos.x,   lightPos.y,   lightPos.z);
 
 	// ── Depth testing ─────────────────────────────────────────────────────────
 	// Ensures closer fragments overwrite farther ones, giving correct 3-D overlap.

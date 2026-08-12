@@ -52,53 +52,94 @@ namespace
 	}
 }
 
-Texture::Texture(const char* image, const char* texType, GLuint slot, GLenum pixelType)
+Texture::Texture(const char* image, const char* texType, GLuint slot)
 {
-	// type is a material role used to build sampler names in Mesh::Draw.
-	type = texType;
+    type = texType;
 
-	int widthImg, heightImg, numColCh;
-	stbi_set_flip_vertically_on_load(true);
-	unsigned char* bytes = load_texture_bytes(image, widthImg, heightImg, numColCh);
+    int widthImg, heightImg, numColCh;
 
-	glGenTextures(1, &ID);
-	// slot is a zero-based unit index, so unit 0 maps to GL_TEXTURE0.
-	glActiveTexture(GL_TEXTURE0 + slot);
-	unit = slot;
-	glBindTexture(GL_TEXTURE_2D, ID);
+    stbi_set_flip_vertically_on_load(true);
+    unsigned char* bytes =
+        load_texture_bytes(image, widthImg, heightImg, numColCh);
 
-	// Use mipmaps when shrinking and nearest-neighbor sampling when enlarging.
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glGenTextures(1, &ID);
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glActiveTexture(GL_TEXTURE0 + slot);
+    unit = slot;
 
-	// Match the OpenGL upload format to the number of channels stb_image found.
-	GLenum format;
-	if (numColCh == 4)
-	{
-		format = GL_RGBA;
-	}
-	else if (numColCh == 3)
-	{
-		format = GL_RGB;
-	}
-	else if (numColCh == 1)
-	{
-		format = GL_RED;
-	}
-	else
-	{
-		throw std::invalid_argument("Automatic Texture type recognition failed");
-	}
+    glBindTexture(GL_TEXTURE_2D, ID);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, format, widthImg, heightImg, 0, format, pixelType, bytes);
-	glGenerateMipmap(GL_TEXTURE_2D);
+    // Texture filtering
+    glTexParameteri(
+        GL_TEXTURE_2D,
+        GL_TEXTURE_MIN_FILTER,
+        GL_NEAREST_MIPMAP_LINEAR
+    );
 
-	// The GPU owns its uploaded copy, so the CPU image can now be released.
-	stbi_image_free(bytes);
-	glBindTexture(GL_TEXTURE_2D, 0);
+    glTexParameteri(
+        GL_TEXTURE_2D,
+        GL_TEXTURE_MAG_FILTER,
+        GL_NEAREST
+    );
+
+    // Texture wrapping
+    glTexParameteri(
+        GL_TEXTURE_2D,
+        GL_TEXTURE_WRAP_S,
+        GL_REPEAT
+    );
+
+    glTexParameteri(
+        GL_TEXTURE_2D,
+        GL_TEXTURE_WRAP_T,
+        GL_REPEAT
+    );
+
+    // Determine the format of the source image data
+    GLenum sourceFormat;
+
+    switch (numColCh)
+    {
+    case 1:
+        sourceFormat = GL_RED;
+        break;
+
+    case 3:
+        sourceFormat = GL_RGB;
+        break;
+
+    case 4:
+        sourceFormat = GL_RGBA;
+        break;
+
+    default:
+        stbi_image_free(bytes);
+        throw std::invalid_argument(
+            "Unsupported number of texture color channels"
+        );
+    }
+
+    // Upload the image data to the GPU
+    glTexImage2D(
+        GL_TEXTURE_2D,
+        0,
+        GL_RGBA,
+        widthImg,
+        heightImg,
+        0,
+        sourceFormat,
+        GL_UNSIGNED_BYTE,
+        bytes
+    );
+
+    // Generate smaller versions of the texture
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    // CPU image data is no longer needed
+    stbi_image_free(bytes);
+
+    // Unbind the texture
+    glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void Texture::texUnit(Shader& shader, const char* uniform, GLuint unit)

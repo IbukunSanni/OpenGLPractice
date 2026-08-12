@@ -94,7 +94,7 @@ vec4 computeSpotLightColor()
 
 void main()
 {
-	// Swap in computePointLightColor() or computeDirectionalLightColor()
-	// to change which light model shades the model.
-	FragColor = computeSpotLightColor();
+	FragColor = computeDirectionalLightColor()
+		+ computePointLightColor()
+		+ computeSpotLightColor();
 }
