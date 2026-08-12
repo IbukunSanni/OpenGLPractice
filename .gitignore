@@ -367,6 +367,10 @@ current_dir.txt
 temp/
 tmp/
 
+# 3D model assets — large binaries kept locally, not tracked in git.
+# Download models yourself and point 'modelPath' in Main.cpp at them.
+Assets/Models/
+
 # OpenGL specific files
 *.exe
 *.tlog
