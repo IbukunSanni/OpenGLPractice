@@ -24,6 +24,12 @@ vec3 computePhongTerms(vec3 normal, vec3 lightDirection, float ambientStrength, 
 	return vec3(ambientStrength, diffuse, specular);
 }
 
+// Distance falloff for a point light: 1 / (quadratic*d^2 + linear*d + 1).
+float computePointAttenuation(float distanceToLight, float linearFactor, float quadraticFactor)
+{
+	return 1.0f / (quadraticFactor * distanceToLight * distanceToLight + linearFactor * distanceToLight + 1.0f);
+}
+
 // Fade smoothly between the spotlight's inner and outer cone.
 float computeSpotIntensity(vec3 lightDirection, vec3 coneDirection, float outerCone, float innerCone)
 {
@@ -43,6 +49,35 @@ vec4 composeLitColor(vec3 terms, float lightIntensity)
 	return (diffuseTex * (diffuse * lightIntensity + ambient) + specMap * specular * lightIntensity) * lightColor;
 }
 
+// Local point light: brightness falls off with distance from lightPos.
+vec4 computePointLightColor()
+{
+	// Light vector from fragment to point light.
+	vec3 lightVec = lightPos - crntPos;
+	float dist = length(lightVec);
+	float linearFactor = 12.0f;
+	float quadraticFactor = 12.0f;
+	float intensity = computePointAttenuation(dist, linearFactor, quadraticFactor);
+
+	vec3 normal = normalize(Normal);
+	vec3 lightDirection = normalize(lightVec);
+	vec3 terms = computePhongTerms(normal, lightDirection, 0.20f, 0.50f, 16.0f);
+
+	return composeLitColor(terms, intensity);
+}
+
+// Global directional light: fixed direction, no distance falloff.
+// lightPos is ignored, since the source is treated as infinitely far away.
+vec4 computeDirectionalLightColor()
+{
+	vec3 normal = normalize(Normal);
+	vec3 lightDirection = normalize(vec3(1.0f, 1.0f, 0.0f));
+	vec3 terms = computePhongTerms(normal, lightDirection, 0.20f, 0.50f, 16.0f);
+
+	return composeLitColor(terms, 1.0f);
+}
+
+// Spotlight: cone-shaped light with a soft edge.
 vec4 computeSpotLightColor()
 {
 	// A larger inner-cone value produces a narrower bright center.
@@ -59,5 +94,7 @@ vec4 computeSpotLightColor()
 
 void main()
 {
+	// Swap in computePointLightColor() or computeDirectionalLightColor()
+	// to change which light model shades the model.
 	FragColor = computeSpotLightColor();
 }
