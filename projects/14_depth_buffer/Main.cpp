@@ -109,6 +109,10 @@ int run()
 		glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		// Escape closes the window immediately.
+		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+			glfwSetWindowShouldClose(window, true);
+
 		// Inputs() reads WASD / mouse and moves the camera.
 		// UpdateMatrix() recomputes proj * view and caches it inside the camera
 		// so Mesh::Draw() can pass it to whichever shader it needs.
