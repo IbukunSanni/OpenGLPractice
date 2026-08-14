@@ -66,10 +66,11 @@ void Model::Draw(Shader& shader, Camera& camera) {
 
 void Model::loadMesh(unsigned int indMesh) {
 	// Look up the accessor indices this primitive uses for each attribute.
-	unsigned int posAccInd = JSON["meshes"][indMesh]["primitives"][0]["attributes"]["POSITION"];
-	unsigned int normalAccInd = JSON["meshes"][indMesh]["primitives"][0]["attributes"]["NORMAL"];
-	unsigned int texAccInd = JSON["meshes"][indMesh]["primitives"][0]["attributes"]["TEXCOORD_0"];
-	unsigned int indAccInd = JSON["meshes"][indMesh]["primitives"][0]["indices"];
+	const json& primitive = JSON["meshes"][indMesh]["primitives"][0];
+	unsigned int posAccInd = primitive["attributes"]["POSITION"];
+	unsigned int normalAccInd = primitive["attributes"]["NORMAL"];
+	unsigned int texAccInd = primitive["attributes"]["TEXCOORD_0"];
+	unsigned int indAccInd = primitive["indices"];
 
 	std::vector<float> posVec = getFloats(JSON["accessors"][posAccInd]);
 	std::vector<glm::vec3> positions = groupFloatsVec3(posVec);
@@ -81,7 +82,7 @@ void Model::loadMesh(unsigned int indMesh) {
 	// Combine all the vertex components and also get the indices and textures
 	std::vector<Vertex> vertices = assembleVertices(positions, normals, texUVs);
 	std::vector<GLuint> indices = getIndices(JSON["accessors"][indAccInd]);
-	std::vector<Texture> textures = getTextures();
+	std::vector<Texture> textures = getTextures(primitive);
 
 	// Combine the vertices, indices, and textures into a mesh
 	meshes.push_back(Mesh(vertices, indices, textures));
@@ -263,57 +264,96 @@ std::vector<GLuint> Model::getIndices(json accessor) {
 
 }
 
-std::vector<Texture> Model::getTextures() {
+std::vector<Texture> Model::getTextures(const json& primitive) {
 	std::vector<Texture> textures;
 
-	std::string fileStr = std::string(file);
-	std::string fileDirectory = fileStr.substr(0, fileStr.find_last_of('/') + 1);
+	const std::string fileDirectory =
+		std::string(file).substr(0, std::string(file).find_last_of('/') + 1);
 
-	for (unsigned int i = 0; i < JSON["images"].size(); i++) {
-		std::string texPath = JSON["images"][i]["uri"];
+	auto imagePathFromTexture = [this](const json& textureInfo) -> std::string {
+		if (textureInfo.find("index") == textureInfo.end())
+			return {};
 
-		// Reuse an already-loaded texture if this URI has been seen before.
-		bool skip = false;
-		for (unsigned int j = 0; j < loadedTexName.size(); j++) {
-			if (loadedTexName[j] == texPath)
+		const unsigned int textureIndex = textureInfo["index"];
+		if (textureIndex >= JSON["textures"].size())
+			return {};
+
+		const json& texture = JSON["textures"][textureIndex];
+		if (texture.find("source") == texture.end())
+			return {};
+
+		const unsigned int imageIndex = texture["source"];
+		if (imageIndex >= JSON["images"].size())
+			return {};
+
+		return JSON["images"][imageIndex].value("uri", std::string{});
+	};
+
+	auto findImage = [this](const char* first, const char* second) -> std::string {
+		for (const json& image : JSON["images"])
+		{
+			const std::string uri = image.value("uri", std::string{});
+			if (uri.find(first) != std::string::npos || uri.find(second) != std::string::npos)
+				return uri;
+		}
+		return {};
+	};
+
+	auto addTexture = [&](const std::string& path, const char* type) {
+		if (path.empty())
+			return;
+
+		for (unsigned int i = 0; i < loadedTexName.size(); i++)
+		{
+			if (loadedTexName[i] == path)
 			{
-				textures.push_back(loadedTex[j]);
-				skip = true;
-				break;
+				Texture reusedTexture = loadedTex[i];
+				reusedTexture.type = type;
+				textures.push_back(reusedTexture);
+				return;
 			}
 		}
 
-		// This must sit outside the dedup loop above: on the first image
-		// loadedTexName is empty, so a nested check would never execute and no
-		// texture would ever be loaded.
-		if (!skip)
-		{
-			// The texture unit is the index this texture will occupy in loadedTex.
-			const GLuint textureUnit = static_cast<GLuint>(loadedTex.size());
+		Texture texture((fileDirectory + path).c_str(), type, static_cast<GLuint>(loadedTex.size()));
+		textures.push_back(texture);
+		loadedTex.push_back(texture);
+		loadedTexName.push_back(path);
+	};
 
-			// Load diffuse texture
-			if (texPath.find("baseColor") != std::string::npos)
+	std::string diffusePath;
+	std::string specularPath;
+
+	if (primitive.find("material") != primitive.end())
+	{
+		const unsigned int materialIndex = primitive["material"];
+		if (materialIndex < JSON["materials"].size())
+		{
+			const json& material = JSON["materials"][materialIndex];
+			const auto pbrIt = material.find("pbrMetallicRoughness");
+			if (pbrIt != material.end())
 			{
-				Texture diffuse = Texture((fileDirectory + texPath).c_str(), "diffuse", textureUnit);
-				textures.push_back(diffuse);
-				loadedTex.push_back(diffuse);
-				loadedTexName.push_back(texPath);
-			}
-			// Load specular texture
-			else if (texPath.find("metallicRoughness") != std::string::npos)
-			{
-				Texture specular = Texture((fileDirectory + texPath).c_str(), "specular", textureUnit);
-				textures.push_back(specular);
-				loadedTex.push_back(specular);
-				loadedTexName.push_back(texPath);
+				const json& pbr = *pbrIt;
+				const auto baseColorIt = pbr.find("baseColorTexture");
+				if (baseColorIt != pbr.end())
+					diffusePath = imagePathFromTexture(*baseColorIt);
+
+				const auto metallicIt = pbr.find("metallicRoughnessTexture");
+				if (metallicIt != pbr.end())
+					specularPath = imagePathFromTexture(*metallicIt);
 			}
 		}
 	}
 
+	// Fall back for incomplete exports or assets that use semantic filenames.
+	if (diffusePath.empty())
+		diffusePath = findImage("baseColor", "diffuse");
+	if (specularPath.empty())
+		specularPath = findImage("metallicRoughness", "specular");
+
+	addTexture(diffusePath, "diffuse");
+	addTexture(specularPath, "specular");
 	return textures;
-
 }
-
 // Zips the parallel positions/normals/UVs arrays into one Vertex per index.
 // Vertex color is hard-coded to white since these meshes carry no per-vertex color data.
 std::vector<Vertex> Model::assembleVertices(

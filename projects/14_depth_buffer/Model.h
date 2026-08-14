@@ -42,7 +42,7 @@ private:
 	// Interprets the binary data into floats, indices, and textures
 	std::vector<float> getFloats(json accessor);
 	std::vector<GLuint> getIndices(json accessor);
-	std::vector<Texture> getTextures();
+	std::vector<Texture> getTextures(const json& primitive);
 
 	// Assembles all the floats into vertices
 	std::vector<Vertex> assembleVertices
