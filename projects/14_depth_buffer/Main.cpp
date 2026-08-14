@@ -10,15 +10,6 @@
 constexpr unsigned int width  = 800;
 constexpr unsigned int height = 800;
 
-// ── Model asset ───────────────────────────────────────────────────────────────
-// Use FORWARD slashes. Model::getData() and Model::getTextures() locate the
-// companion .bin and texture files by splitting this string on '/', so a path
-// written with backslashes resolves to an empty directory and the model's
-// buffers silently fail to load. Windows accepts forward slashes fine.
-const std::string assetDirectory =
-	"C:/Users/Ibukunoluwa/Documents/Coding/C-C++/OpenGL-VSstudio/OpenGLPractice/Assets";
-const std::string modelPath = assetDirectory + "/Models/autumn_sword/scene.gltf";
-
 // ── run() ─────────────────────────────────────────────────────────────────────
 // Separated from main() so every early-return path is caught by the try/catch
 // in main() and printed as a clean error message instead of a crash dialog.
@@ -84,6 +75,14 @@ int run()
 	camera.AttachToWindow(window);
 
 	// ── Model ─────────────────────────────────────────────────────────────────
+	// Use FORWARD slashes. Model::getData() and Model::getTextures() locate the
+	// companion .bin and texture files by splitting this string on '/', so a path
+	// written with backslashes resolves to an empty directory and the model's
+	// buffers silently fail to load. Windows accepts forward slashes fine.
+	const std::string assetDirectory =
+		"C:/Users/Ibukunoluwa/Documents/Coding/C-C++/OpenGL-VSstudio/OpenGLPractice/Assets";
+	const std::string modelPath = assetDirectory + "/Models/autumn_sword/scene.gltf";
+
 	// Fail loudly with a useful message if the asset is missing, rather than
 	// letting the JSON parser throw something cryptic. std::ifstream is used
 	// instead of std::filesystem::exists so this project does not require C++17.
