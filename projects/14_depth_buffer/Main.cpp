@@ -51,13 +51,7 @@ int run()
 	// ── Shaders ───────────────────────────────────────────────────────────────
 	// One shader is enough now: the model supplies its own geometry and textures,
 	// so there is no separate light-marker cube to draw with a flat shader.
-	// Built as a full path (rather than a bare relative filename) so the shader
-	// files load correctly regardless of the process's current working directory.
-	const std::string shaderDirectory =
-		"C:/Users/Ibukunoluwa/Documents/Coding/C-C++/OpenGL-VSstudio/OpenGLPractice/projects/14_depth_buffer";
-	const std::string vertexShaderPath = shaderDirectory + "/default.vert";
-	const std::string fragmentShaderPath = shaderDirectory + "/default.frag";
-	Shader shaderProgram(vertexShaderPath.c_str(), fragmentShaderPath.c_str());
+	Shader shaderProgram("default.vert", "default.frag");
 
 	// ── Light uniforms ────────────────────────────────────────────────────────
 	// Both values are constant for the lifetime of the program, so upload them
@@ -88,9 +82,6 @@ int run()
 	const std::string assetDirectory =
 		"C:/Users/Ibukunoluwa/Documents/Coding/C-C++/OpenGL-VSstudio/OpenGLPractice/Assets";
 	const std::string modelPath = assetDirectory + "/Models/autumn_sword/scene.gltf";
-	// AGENT: fill teh directories
-	const std::string groundPath = assetDirectory + "";
-	const std::string treesPath = assetDirectory + "";
 
 	// Fail loudly with a useful message if the asset is missing, rather than
 	// letting the JSON parser throw something cryptic. std::ifstream is used
@@ -109,8 +100,6 @@ int run()
 	// Model parses the .gltf, pulls vertices/indices out of the .bin buffer,
 	// loads every referenced texture, and builds one Mesh per glTF mesh node.
 	Model model(modelPath.c_str());
-	Model model(groundPath.c_str());
-	Model model(treesPath.c_str());
 
 	// ── Render loop ───────────────────────────────────────────────────────────
 	while (!glfwWindowShouldClose(window))
