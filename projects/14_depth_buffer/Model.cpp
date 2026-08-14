@@ -37,13 +37,15 @@ namespace {
 }
 
 Model::Model(const char* file) {
-	//Make a JSON object
+	// Parse the glTF JSON and load its referenced binary buffer up front,
+	// since every accessor lookup below reads out of these two members.
 	std::string text = get_file_contents(file);
 	JSON = json::parse(text);
 
 	Model::file = file;
 	data = getData();
 
+	// Recursively load every mesh reachable from the active scene's root nodes.
 	const unsigned int sceneIndex = JSON.value("scene", 0u);
 	const json& rootNodes = JSON.at("scenes").at(sceneIndex).at("nodes");
 	if (rootNodes.empty())
@@ -55,6 +57,7 @@ Model::Model(const char* file) {
 }
 
 void Model::Draw(Shader& shader, Camera& camera) {
+	// Each mesh keeps its own world matrix, computed once in traverseNode().
 	for (unsigned int i = 0; i < meshes.size(); i++)
 	{
 		meshes[i].Mesh::Draw(shader, camera, matricesMeshes[i]);
@@ -62,6 +65,7 @@ void Model::Draw(Shader& shader, Camera& camera) {
 }
 
 void Model::loadMesh(unsigned int indMesh) {
+	// Look up the accessor indices this primitive uses for each attribute.
 	unsigned int posAccInd = JSON["meshes"][indMesh]["primitives"][0]["attributes"]["POSITION"];
 	unsigned int normalAccInd = JSON["meshes"][indMesh]["primitives"][0]["attributes"]["NORMAL"];
 	unsigned int texAccInd = JSON["meshes"][indMesh]["primitives"][0]["attributes"]["TEXCOORD_0"];
@@ -165,6 +169,8 @@ void Model::traverseNode(unsigned int nextNode, glm::mat4 matrix) {
 
 }
 
+// Reads the binary buffer referenced by the glTF's "buffers[0].uri" field.
+// The URI is relative to the model file's own directory, not the CWD.
 std::vector<unsigned char> Model::getData() {
 	std::string bytesText;
 	std::string uri = JSON["buffers"][0]["uri"];
@@ -308,6 +314,8 @@ std::vector<Texture> Model::getTextures() {
 
 }
 
+// Zips the parallel positions/normals/UVs arrays into one Vertex per index.
+// Vertex color is hard-coded to white since these meshes carry no per-vertex color data.
 std::vector<Vertex> Model::assembleVertices(
 	std::vector<glm::vec3> positions,
 	std::vector<glm::vec3> normals,
@@ -336,6 +344,7 @@ std::vector<Vertex> Model::assembleVertices(
 
 }
 
+// Splits a flat float buffer into vec2 chunks, 2 floats each.
 std::vector<glm::vec2> Model::groupFloatsVec2(std::vector<float> floatVec) {
 	const unsigned int floatsPerVector = 2;
 
@@ -354,6 +363,7 @@ std::vector<glm::vec2> Model::groupFloatsVec2(std::vector<float> floatVec) {
 	return vectors;
 }
 
+// Splits a flat float buffer into vec3 chunks, 3 floats each.
 std::vector<glm::vec3> Model::groupFloatsVec3(std::vector<float> floatVec) {
 	const unsigned int floatsPerVector = 3;
 

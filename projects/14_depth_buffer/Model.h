@@ -4,11 +4,14 @@
 
 using json = nlohmann::json;
 
+// Loads a static glTF 2.0 model (mesh geometry + textures) from disk and
+// renders every mesh it contains via Mesh::Draw().
 class Model {
 public:
-	// Loads in a model from a file and stores tha information in 'data', 'JSON', and 'file'
+	// Loads a model from a file and stores the information in 'data', 'JSON', and 'file'
 	Model(const char* file);
 
+	// Draws every mesh in the model using its own precomputed node transform.
 	void Draw(Shader& shader, Camera& camera);
 
 private:
