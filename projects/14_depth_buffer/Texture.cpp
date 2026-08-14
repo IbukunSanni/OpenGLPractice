@@ -17,6 +17,9 @@ namespace
 		return std::string("unknown");
 	}
 
+	// Tries 'image' as given, then retries under a few '../' prefixes, since
+	// asset paths are written relative to the intended project root rather
+	// than wherever the executable happens to be launched from.
 	unsigned char* load_texture_bytes(const char* image, int& widthImg, int& heightImg, int& numColCh)
 	{
 		unsigned char* bytes = stbi_load(image, &widthImg, &heightImg, &numColCh, 0);
@@ -52,6 +55,8 @@ namespace
 	}
 }
 
+// Loads an image from disk, uploads it to a new GL_TEXTURE_2D, and
+// generates mipmaps. The CPU-side pixel buffer is freed before returning.
 Texture::Texture(const char* image, const char* texType, GLuint slot)
 {
     type = texType;

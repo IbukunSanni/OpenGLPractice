@@ -1,5 +1,7 @@
 #include "Mesh.h"
 
+// Uploads the vertex/index data into a VBO/EBO, then records this mesh's
+// attribute layout into its own VAO so Draw() can bind just the VAO later.
 Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<GLuint>& indices, const std::vector<Texture>& textures)
 	: vertices(vertices), indices(indices), textures(textures)
 {
