@@ -79,7 +79,7 @@ void run()
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	WindowPtr window(glfwCreateWindow(width, height, "16_face_culling", nullptr, nullptr));
+	WindowPtr window(glfwCreateWindow(width, height, "17_transaparency_n_blending", nullptr, nullptr));
 	if (!window)
 	{
 		const char* description = nullptr;
@@ -164,7 +164,7 @@ void run()
 		// Display live camera data and FPS for choosing reusable viewpoints.
 		std::ostringstream titleStream;
 		titleStream << std::fixed << std::setprecision(2)
-			<< "16_face_culling | FPS: " << fps << " | " << ms <<"ms" << " | "
+			<< "17_transaparency_n_blending | FPS: " << fps << " | " << ms <<"ms" << " | "
 			<< "Pos(" << camera.Position.x << ", " << camera.Position.y << ", " << camera.Position.z << ") "
 			<< "Dir(" << camera.Orientation.x << ", " << camera.Orientation.y << ", " << camera.Orientation.z << ")";
 		glfwSetWindowTitle(window.get(), titleStream.str().c_str());

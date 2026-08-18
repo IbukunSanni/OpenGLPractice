@@ -6,6 +6,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "projects", "projects", "{E0
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "16_face_culling", "projects\16_face_culling\16_face_culling.vcxproj", "{8EEE9933-7A43-4F2A-86A2-A3209C27430F}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "17_transaparency_n_blending", "projects\17_transaparency_n_blending\17_transaparency_n_blending.vcxproj", "{917187A9-74B0-4885-8B5A-3D9C9FD921A8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -16,6 +18,10 @@ Global
 		{8EEE9933-7A43-4F2A-86A2-A3209C27430F}.Debug|x64.Build.0 = Debug|x64
 		{8EEE9933-7A43-4F2A-86A2-A3209C27430F}.Release|x64.ActiveCfg = Release|x64
 		{8EEE9933-7A43-4F2A-86A2-A3209C27430F}.Release|x64.Build.0 = Release|x64
+		{917187A9-74B0-4885-8B5A-3D9C9FD921A8}.Debug|x64.ActiveCfg = Debug|x64
+		{917187A9-74B0-4885-8B5A-3D9C9FD921A8}.Debug|x64.Build.0 = Debug|x64
+		{917187A9-74B0-4885-8B5A-3D9C9FD921A8}.Release|x64.ActiveCfg = Release|x64
+		{917187A9-74B0-4885-8B5A-3D9C9FD921A8}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
