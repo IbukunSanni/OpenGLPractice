@@ -39,10 +39,9 @@ void main()
 	Normal = normalize(transpose(inverse(mat3(transform))) * aNormal);
 	// Assigns the colors from the Vertex Data to "color"
 	color = aColor;
-	// Assigns the texture coordinates from the Vertex Data to "texCoord".
-	// Paired with stbi_set_flip_vertically_on_load(true) in Texture.cpp —
-	// changing one without the other breaks UV sampling on these models.
-	texCoord = mat2(0.0, -1.0, 1.0, 0.0) * aTex;
+	// glTF UVs are top-left origin with v down; stb loads top-row-first with
+	// flip disabled, so GL's t already matches v — no correction needed.
+	texCoord = aTex;
 	
 	// Outputs the positions/coordinates of all vertices
 	gl_Position = camMatrix * vec4(crntPos, 1.0);

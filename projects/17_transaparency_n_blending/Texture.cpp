@@ -64,7 +64,7 @@ Texture::Texture(const char* image, const char* texType, GLuint slot)
 
     // Paired with the mat2 UV rotation in default.vert — these two must change
     // together, since the models' UVs are authored for that combination.
-    stbi_set_flip_vertically_on_load(true);
+    stbi_set_flip_vertically_on_load(false);
     unsigned char* bytes =
         load_texture_bytes(image, widthImg, heightImg, numColCh);
 
