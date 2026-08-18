@@ -53,20 +53,16 @@ void Camera::UpdateMatrix(float FOVdeg, float nearPlane, float farPlane)
 	// The projection matrix controls perspective, FOV, and clipping distance.
 	glm::mat4 projection = glm::mat4(1.0f);
 
-	// Build the view matrix.
-	// Position is where the camera is.
-	// Position + Orientation is the point the camera is looking toward.
-	// Up tells the camera which direction counts as "up."
+	// Build the view matrix: Position is the eye, Position + Orientation is
+	// the look-at point, and Up defines which direction is "up".
 	view = glm::lookAt(Position, Position + Orientation, Up);
 
 	// Calculate the aspect ratio of the window.
 	// This prevents the scene from looking stretched.
 	auto aspect_ratio = (float)width / height;
 
-	// Build the projection matrix.
-	// FOVdeg controls how wide the camera can see.
-	// aspect_ratio matches the camera to the window shape.
-	// nearPlane and farPlane control the closest and farthest visible distances.
+	// Build the projection matrix: FOVdeg sets how wide the camera sees,
+	// aspect_ratio matches the window shape, and near/far clip the view.
 	projection = glm::perspective(
 		glm::radians(FOVdeg),
 		aspect_ratio,
@@ -79,9 +75,7 @@ void Camera::UpdateMatrix(float FOVdeg, float nearPlane, float farPlane)
 
 void Camera::Inputs(GLFWwindow* window)
 {
-	// Blender-style mouse controls:
-	// - MMB drag: orbit
-	// - Shift + MMB drag: pan
+	// Blender-style mouse controls: MMB drag orbits, Shift + MMB drag pans.
 	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS)
 	{
 		double mouseX;

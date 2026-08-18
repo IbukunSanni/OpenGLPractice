@@ -35,9 +35,8 @@ public:
 
 	// ── Viewport ────────────────────────────────────────────────────────────
 
-	// Width and height of the window in pixels.
-	// Stored so Matrix() can compute the aspect ratio and Inputs() can
-	// compute normalised mouse deltas without needing the window each frame.
+	// Width and height of the window in pixels, used by Matrix() for the
+	// aspect ratio and by Inputs() for normalised mouse deltas.
 	int width;
 	int height;
 
@@ -57,15 +56,7 @@ public:
 	// ── Methods ─────────────────────────────────────────────────────────────
 
 	// Builds the combined (proj * view) matrix from the current Position /
-	// Orientation and uploads it to the named uniform in the given shader.
-	//   FOVdeg    — vertical field of view in degrees (typically 45)
-	//   nearPlane — closest visible distance (e.g. 0.1)
-	//   farPlane  — furthest visible distance (e.g. 100)
-	//   shader    — the active Shader whose uniform will be written
-	//   uniform   — name of the mat4 uniform to update (e.g. "camMatrix")
-	void Matrix(float FOVdeg, float nearPlane, float farPlane, Shader& shader, const char* uniform);
-
-	// TODO: update Matrix to both updateMatrix and Matrix, so the camera matrix can be queried without uploading to a shader.
+	// Orientation, without uploading it anywhere (see Matrix() for that).
 	void UpdateMatrix(float FOVdeg, float nearPlane, float farPlane);
 	void Matrix(Shader& shader, const char* uniform);
 	void SetView(const glm::vec3& position, const glm::vec3& direction);

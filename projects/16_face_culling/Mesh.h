@@ -23,9 +23,7 @@ public:
 	Mesh(const std::vector<Vertex>& vertices, const std::vector<GLuint>& indices, const std::vector<Texture>& textures);
 
 	// Binds this mesh's textures and submits its indexed triangles.
-	// 'matrix' is the accumulated node transform supplied by Model. The
-	// translation/rotation/scale components default to identity so a standalone
-	// Mesh (one not owned by a Model) can still be drawn with just two arguments.
+	// 'matrix' is the node transform from Model; the T/R/S args default to identity.
 	void Draw(
 		Shader& shader,
 		Camera& camera,

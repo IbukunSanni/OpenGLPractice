@@ -17,9 +17,8 @@ namespace
 		return std::string("unknown");
 	}
 
-	// Tries 'image' as given, then retries under a few '../' prefixes, since
-	// asset paths are written relative to the intended project root rather
-	// than wherever the executable happens to be launched from.
+	// Tries 'image' as given, then retries under a few '../' prefixes, since asset
+	// paths are relative to the intended project root, not the launch directory.
 	unsigned char* load_texture_bytes(const char* image, int& widthImg, int& heightImg, int& numColCh)
 	{
 		unsigned char* bytes = stbi_load(image, &widthImg, &heightImg, &numColCh, 0);

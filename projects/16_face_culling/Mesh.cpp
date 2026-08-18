@@ -58,9 +58,7 @@ void Mesh::Draw(
 	camera.Matrix(shader, "camMatrix");
 
 	// The vertex shader multiplies model * translation * rotation * scale, so all
-	// four must be uploaded. Model bakes the node hierarchy into 'matrix' and
-	// leaves the other three at identity; a standalone Mesh leaves all four at
-	// identity unless the caller overrides them.
+	// four must be uploaded, even the ones left at identity.
 	glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), translation);
 	glm::mat4 rotationMatrix = glm::mat4_cast(rotation);
 	glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), scale);

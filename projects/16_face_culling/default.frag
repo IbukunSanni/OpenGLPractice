@@ -111,10 +111,8 @@ float logisticDepth(float depth){
 
 void main()
 {
-	// Blend the lit surface color with a fixed haze color based on depth:
-	// near fragments (depth ~0) show the true lit color, far fragments
-	// (depth ~1) fade toward the haze color, simulating distance fog.
-	// outputs final color
+	// Blend the lit surface color with a fixed haze color based on depth,
+	// simulating distance fog (near fragments stay lit, far ones fade).
 	float depth = logisticDepth(gl_FragCoord.z);
 	vec4 surfaceColor = computeDirectionalLightColor();
 	vec4 fogColor = vec4(0.85f, 0.85f, 0.90f, 1.0f);

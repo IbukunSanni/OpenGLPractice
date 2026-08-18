@@ -3,11 +3,9 @@
 #include <limits>
 #include <stdexcept>
 
-// TODO: for string constants need to be added, for ease of expalanation and more readability
 namespace {
-	// glTF 2.0 accessor component types. These are spec-defined values and
-	// happen to be identical to the matching OpenGL enums.
-	// See glTF 2.0 spec, 5.1.1 "accessor.componentType".
+	// glTF 2.0 accessor component types (spec 5.1.1 "accessor.componentType").
+	// These values happen to be identical to the matching OpenGL enums.
 	constexpr unsigned int GLTF_COMPONENT_BYTE           = 5120;
 	constexpr unsigned int GLTF_COMPONENT_UNSIGNED_BYTE  = 5121;
 	constexpr unsigned int GLTF_COMPONENT_SHORT          = 5122;
@@ -15,9 +13,44 @@ namespace {
 	constexpr unsigned int GLTF_COMPONENT_UNSIGNED_INT   = 5125;
 	constexpr unsigned int GLTF_COMPONENT_FLOAT          = 5126;
 
+	// glTF 2.0 JSON key names, factored out so each is spelled once.
+	constexpr const char* GLTF_KEY_SCENE                       = "scene";
+	constexpr const char* GLTF_KEY_SCENES                      = "scenes";
+	constexpr const char* GLTF_KEY_NODES                       = "nodes";
+	constexpr const char* GLTF_KEY_MESH                        = "mesh";
+	constexpr const char* GLTF_KEY_MESHES                      = "meshes";
+	constexpr const char* GLTF_KEY_PRIMITIVES                  = "primitives";
+	constexpr const char* GLTF_KEY_ATTRIBUTES                  = "attributes";
+	constexpr const char* GLTF_KEY_POSITION                    = "POSITION";
+	constexpr const char* GLTF_KEY_NORMAL                      = "NORMAL";
+	constexpr const char* GLTF_KEY_TEXCOORD_0                  = "TEXCOORD_0";
+	constexpr const char* GLTF_KEY_INDICES                     = "indices";
+	constexpr const char* GLTF_KEY_ACCESSORS                   = "accessors";
+	constexpr const char* GLTF_KEY_TRANSLATION                 = "translation";
+	constexpr const char* GLTF_KEY_ROTATION                    = "rotation";
+	constexpr const char* GLTF_KEY_SCALE                       = "scale";
+	constexpr const char* GLTF_KEY_MATRIX                      = "matrix";
+	constexpr const char* GLTF_KEY_CHILDREN                    = "children";
+	constexpr const char* GLTF_KEY_BUFFERS                     = "buffers";
+	constexpr const char* GLTF_KEY_URI                         = "uri";
+	constexpr const char* GLTF_KEY_BUFFER_VIEW                 = "bufferView";
+	constexpr const char* GLTF_KEY_BUFFER_VIEWS                = "bufferViews";
+	constexpr const char* GLTF_KEY_COUNT                       = "count";
+	constexpr const char* GLTF_KEY_BYTE_OFFSET                 = "byteOffset";
+	constexpr const char* GLTF_KEY_TYPE                        = "type";
+	constexpr const char* GLTF_KEY_COMPONENT_TYPE              = "componentType";
+	constexpr const char* GLTF_KEY_INDEX                       = "index";
+	constexpr const char* GLTF_KEY_TEXTURES                    = "textures";
+	constexpr const char* GLTF_KEY_SOURCE                      = "source";
+	constexpr const char* GLTF_KEY_IMAGES                      = "images";
+	constexpr const char* GLTF_KEY_MATERIAL                    = "material";
+	constexpr const char* GLTF_KEY_MATERIALS                   = "materials";
+	constexpr const char* GLTF_KEY_PBR_METALLIC_ROUGHNESS      = "pbrMetallicRoughness";
+	constexpr const char* GLTF_KEY_BASE_COLOR_TEXTURE          = "baseColorTexture";
+	constexpr const char* GLTF_KEY_METALLIC_ROUGHNESS_TEXTURE  = "metallicRoughnessTexture";
+
 	// Reads 'count' tightly packed values of type T starting at 'beginningOfData'
-	// and appends them as GLuints. sizeof(T) supplies the byte stride, so the
-	// element width no longer has to be hard-coded at each call site.
+	// and appends them as GLuints; sizeof(T) supplies the byte stride.
 	template <typename T>
 	void readIndicesAs(
 		const std::vector<unsigned char>& data,
@@ -49,8 +82,8 @@ Model::Model(const char* file) {
 	data = getData();
 
 	// Recursively load every mesh reachable from the active scene's root nodes.
-	const unsigned int sceneIndex = JSON.value("scene", 0u);
-	const json& rootNodes = JSON.at("scenes").at(sceneIndex).at("nodes");
+	const unsigned int sceneIndex = JSON.value(GLTF_KEY_SCENE, 0u);
+	const json& rootNodes = JSON.at(GLTF_KEY_SCENES).at(sceneIndex).at(GLTF_KEY_NODES);
 	if (rootNodes.empty())
 		throw std::runtime_error("The selected glTF scene has no root nodes");
 
@@ -91,22 +124,22 @@ glm::vec3 Model::GetWorldCenter() const {
 }
 void Model::loadMesh(unsigned int indMesh) {
 	// Look up the accessor indices this primitive uses for each attribute.
-	const json& primitive = JSON["meshes"][indMesh]["primitives"][0];
-	unsigned int posAccInd = primitive["attributes"]["POSITION"];
-	unsigned int normalAccInd = primitive["attributes"]["NORMAL"];
-	unsigned int texAccInd = primitive["attributes"]["TEXCOORD_0"];
-	unsigned int indAccInd = primitive["indices"];
+	const json& primitive = JSON[GLTF_KEY_MESHES][indMesh][GLTF_KEY_PRIMITIVES][0];
+	unsigned int posAccInd = primitive[GLTF_KEY_ATTRIBUTES][GLTF_KEY_POSITION];
+	unsigned int normalAccInd = primitive[GLTF_KEY_ATTRIBUTES][GLTF_KEY_NORMAL];
+	unsigned int texAccInd = primitive[GLTF_KEY_ATTRIBUTES][GLTF_KEY_TEXCOORD_0];
+	unsigned int indAccInd = primitive[GLTF_KEY_INDICES];
 
-	std::vector<float> posVec = getFloats(JSON["accessors"][posAccInd]);
+	std::vector<float> posVec = getFloats(JSON[GLTF_KEY_ACCESSORS][posAccInd]);
 	std::vector<glm::vec3> positions = groupFloatsVec3(posVec);
-	std::vector<float> normalVec = getFloats(JSON["accessors"][normalAccInd]);
+	std::vector<float> normalVec = getFloats(JSON[GLTF_KEY_ACCESSORS][normalAccInd]);
 	std::vector<glm::vec3> normals = groupFloatsVec3(normalVec);
-	std::vector<float> texVec = getFloats(JSON["accessors"][texAccInd]);
+	std::vector<float> texVec = getFloats(JSON[GLTF_KEY_ACCESSORS][texAccInd]);
 	std::vector<glm::vec2> texUVs = groupFloatsVec2(texVec);
 
 	// Combine all the vertex components and also get the indices and textures
 	std::vector<Vertex> vertices = assembleVertices(positions, normals, texUVs);
-	std::vector<GLuint> indices = getIndices(JSON["accessors"][indAccInd]);
+	std::vector<GLuint> indices = getIndices(JSON[GLTF_KEY_ACCESSORS][indAccInd]);
 	std::vector<Texture> textures = getTextures(primitive);
 
 	// Combine the vertices, indices, and textures into a mesh
@@ -115,50 +148,47 @@ void Model::loadMesh(unsigned int indMesh) {
 }
 
 void Model::traverseNode(unsigned int nextNode, glm::mat4 matrix) {
-	// TODO: consider const reference
-	// TODO: constant strings for JSON keys
-	json node = JSON["nodes"][nextNode];
+	const json& node = JSON[GLTF_KEY_NODES][nextNode];
 
 	glm::vec3 translation(0.0f);
 
-	if (node.find("translation") != node.end()) {
+	if (node.find(GLTF_KEY_TRANSLATION) != node.end()) {
 		translation = glm::vec3(
-			node["translation"][0],
-			node["translation"][1],
-			node["translation"][2]
+			node[GLTF_KEY_TRANSLATION][0],
+			node[GLTF_KEY_TRANSLATION][1],
+			node[GLTF_KEY_TRANSLATION][2]
 		);
 	}
 
 	glm::quat rotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
-	if (node.find("rotation") != node.end()) {
-		// glTF stores quaternions as [x, y, z, w] (component order), but glm::quat's
-		// constructor takes (w, x, y, z) - so we have to reorder on the way in:
-		// node["rotation"][3] -> w, and [0],[1],[2] -> x,y,z respectively.
+	if (node.find(GLTF_KEY_ROTATION) != node.end()) {
+		// glTF stores quaternions as [x, y, z, w], but glm::quat's constructor
+		// takes (w, x, y, z), so the components are reordered on the way in.
 		rotation = glm::quat(
-			node["rotation"][3],
-			node["rotation"][0],
-			node["rotation"][1],
-			node["rotation"][2]
+			node[GLTF_KEY_ROTATION][3],
+			node[GLTF_KEY_ROTATION][0],
+			node[GLTF_KEY_ROTATION][1],
+			node[GLTF_KEY_ROTATION][2]
 		);
 	}
 
 	glm::vec3 scale = glm::vec3(1.0f, 1.0f, 1.0f);
-	if (node.find("scale") != node.end()) {
+	if (node.find(GLTF_KEY_SCALE) != node.end()) {
 		scale = glm::vec3(
-			node["scale"][0],
-			node["scale"][1],
-			node["scale"][2]
+			node[GLTF_KEY_SCALE][0],
+			node[GLTF_KEY_SCALE][1],
+			node[GLTF_KEY_SCALE][2]
 		);
 	}
 
 	glm::mat4 matNode = glm::mat4(1.0f);
-	if (node.find("matrix") != node.end()) {
-		if (node["matrix"].size() != 16)
+	if (node.find(GLTF_KEY_MATRIX) != node.end()) {
+		if (node[GLTF_KEY_MATRIX].size() != 16)
 			throw std::runtime_error("A glTF node matrix must contain exactly 16 values");
 
 		float matValues[16];
-		for (unsigned int i = 0; i < node["matrix"].size(); i++)
-			matValues[i] = (node["matrix"][i]);
+		for (unsigned int i = 0; i < node[GLTF_KEY_MATRIX].size(); i++)
+			matValues[i] = (node[GLTF_KEY_MATRIX][i]);
 		matNode = glm::make_mat4(matValues);
 	}
 
@@ -176,21 +206,21 @@ void Model::traverseNode(unsigned int nextNode, glm::mat4 matrix) {
 	glm::mat4 matNextNode = matrix * matNode * trans * rot * sca;
 
 	// Check if the node contains a mesh and if it does load it
-	if (node.find("mesh") != node.end())
+	if (node.find(GLTF_KEY_MESH) != node.end())
 	{
 		translationsMeshes.push_back(translation);
 		rotationsMeshes.push_back(rotation);
 		scalesMeshes.push_back(scale);
 		matricesMeshes.push_back(matNextNode);
 
-		loadMesh(node["mesh"]);
+		loadMesh(node[GLTF_KEY_MESH]);
 	}
 
 	// Check if the node has children, and if it does, apply this function to them with the matNextNode
-	if (node.find("children") != node.end())
+	if (node.find(GLTF_KEY_CHILDREN) != node.end())
 	{
-		for (unsigned int i = 0; i < node["children"].size(); i++)
-			traverseNode(node["children"][i], matNextNode);
+		for (unsigned int i = 0; i < node[GLTF_KEY_CHILDREN].size(); i++)
+			traverseNode(node[GLTF_KEY_CHILDREN][i], matNextNode);
 	}
 
 }
@@ -199,7 +229,7 @@ void Model::traverseNode(unsigned int nextNode, glm::mat4 matrix) {
 // The URI is relative to the model file's own directory, not the CWD.
 std::vector<unsigned char> Model::getData() {
 	std::string bytesText;
-	std::string uri = JSON["buffers"][0]["uri"];
+	std::string uri = JSON[GLTF_KEY_BUFFERS][0][GLTF_KEY_URI];
 
 	std::string fileStr = std::string(file);
 	std::string fileDirectory = fileStr.substr(0, fileStr.find_last_of('/') + 1);
@@ -213,15 +243,15 @@ std::vector<unsigned char> Model::getData() {
 std::vector<float> Model::getFloats(json accessor) {
 	std::vector<float> floatVec;
 
-	unsigned int buffViewInd = accessor.at("bufferView");
-	unsigned int count = accessor["count"];
-	unsigned int accByteOffset = accessor.value("byteOffset", 0);
-	std::string type = accessor["type"];
+	unsigned int buffViewInd = accessor.at(GLTF_KEY_BUFFER_VIEW);
+	unsigned int count = accessor[GLTF_KEY_COUNT];
+	unsigned int accByteOffset = accessor.value(GLTF_KEY_BYTE_OFFSET, 0);
+	std::string type = accessor[GLTF_KEY_TYPE];
 
-	json bufferView = JSON["bufferViews"][buffViewInd];
+	json bufferView = JSON[GLTF_KEY_BUFFER_VIEWS][buffViewInd];
 	// byteOffset is optional in glTF and defaults to 0. Reading it directly
 	// throws type_error.302 on the many exporters that omit it.
-	unsigned int byteOffset = bufferView.value("byteOffset", 0);
+	unsigned int byteOffset = bufferView.value(GLTF_KEY_BYTE_OFFSET, 0);
 
 	// Interpret the type and store it into numPerVert
 	unsigned int numPerVert;
@@ -253,14 +283,14 @@ std::vector<float> Model::getFloats(json accessor) {
 std::vector<GLuint> Model::getIndices(json accessor) {
 	std::vector<GLuint> indices;
 
-	unsigned int buffViewInd = accessor.at("bufferView");
-	unsigned int count = accessor["count"];
-	unsigned int accByteOffset = accessor.value("byteOffset", 0);
-	unsigned int componentType = accessor["componentType"];
+	unsigned int buffViewInd = accessor.at(GLTF_KEY_BUFFER_VIEW);
+	unsigned int count = accessor[GLTF_KEY_COUNT];
+	unsigned int accByteOffset = accessor.value(GLTF_KEY_BYTE_OFFSET, 0);
+	unsigned int componentType = accessor[GLTF_KEY_COMPONENT_TYPE];
 
-	json bufferView = JSON["bufferViews"][buffViewInd];
+	json bufferView = JSON[GLTF_KEY_BUFFER_VIEWS][buffViewInd];
 	// byteOffset is optional in glTF and defaults to 0 (see getFloats above).
-	unsigned int byteOffset = bufferView.value("byteOffset", 0);
+	unsigned int byteOffset = bufferView.value(GLTF_KEY_BYTE_OFFSET, 0);
 
 	unsigned int beginningOfData = byteOffset + accByteOffset;
 
@@ -296,28 +326,28 @@ std::vector<Texture> Model::getTextures(const json& primitive) {
 		std::string(file).substr(0, std::string(file).find_last_of('/') + 1);
 
 	auto imagePathFromTexture = [this](const json& textureInfo) -> std::string {
-		if (textureInfo.find("index") == textureInfo.end())
+		if (textureInfo.find(GLTF_KEY_INDEX) == textureInfo.end())
 			return {};
 
-		const unsigned int textureIndex = textureInfo["index"];
-		if (textureIndex >= JSON["textures"].size())
+		const unsigned int textureIndex = textureInfo[GLTF_KEY_INDEX];
+		if (textureIndex >= JSON[GLTF_KEY_TEXTURES].size())
 			return {};
 
-		const json& texture = JSON["textures"][textureIndex];
-		if (texture.find("source") == texture.end())
+		const json& texture = JSON[GLTF_KEY_TEXTURES][textureIndex];
+		if (texture.find(GLTF_KEY_SOURCE) == texture.end())
 			return {};
 
-		const unsigned int imageIndex = texture["source"];
-		if (imageIndex >= JSON["images"].size())
+		const unsigned int imageIndex = texture[GLTF_KEY_SOURCE];
+		if (imageIndex >= JSON[GLTF_KEY_IMAGES].size())
 			return {};
 
-		return JSON["images"][imageIndex].value("uri", std::string{});
+		return JSON[GLTF_KEY_IMAGES][imageIndex].value(GLTF_KEY_URI, std::string{});
 	};
 
 	auto findImage = [this](const char* first, const char* second) -> std::string {
-		for (const json& image : JSON["images"])
+		for (const json& image : JSON[GLTF_KEY_IMAGES])
 		{
-			const std::string uri = image.value("uri", std::string{});
+			const std::string uri = image.value(GLTF_KEY_URI, std::string{});
 			if (uri.find(first) != std::string::npos || uri.find(second) != std::string::npos)
 				return uri;
 		}
@@ -348,21 +378,21 @@ std::vector<Texture> Model::getTextures(const json& primitive) {
 	std::string diffusePath;
 	std::string specularPath;
 
-	if (primitive.find("material") != primitive.end())
+	if (primitive.find(GLTF_KEY_MATERIAL) != primitive.end())
 	{
-		const unsigned int materialIndex = primitive["material"];
-		if (materialIndex < JSON["materials"].size())
+		const unsigned int materialIndex = primitive[GLTF_KEY_MATERIAL];
+		if (materialIndex < JSON[GLTF_KEY_MATERIALS].size())
 		{
-			const json& material = JSON["materials"][materialIndex];
-			const auto pbrIt = material.find("pbrMetallicRoughness");
+			const json& material = JSON[GLTF_KEY_MATERIALS][materialIndex];
+			const auto pbrIt = material.find(GLTF_KEY_PBR_METALLIC_ROUGHNESS);
 			if (pbrIt != material.end())
 			{
 				const json& pbr = *pbrIt;
-				const auto baseColorIt = pbr.find("baseColorTexture");
+				const auto baseColorIt = pbr.find(GLTF_KEY_BASE_COLOR_TEXTURE);
 				if (baseColorIt != pbr.end())
 					diffusePath = imagePathFromTexture(*baseColorIt);
 
-				const auto metallicIt = pbr.find("metallicRoughnessTexture");
+				const auto metallicIt = pbr.find(GLTF_KEY_METALLIC_ROUGHNESS_TEXTURE);
 				if (metallicIt != pbr.end())
 					specularPath = imagePathFromTexture(*metallicIt);
 			}
