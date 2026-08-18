@@ -5,9 +5,8 @@
 
 // TODO: for string constants need to be added, for ease of expalanation and more readability
 namespace {
-	// glTF 2.0 accessor component types. These are spec-defined values and
-	// happen to be identical to the matching OpenGL enums.
-	// See glTF 2.0 spec, 5.1.1 "accessor.componentType".
+	// glTF 2.0 accessor component types (spec 5.1.1 "accessor.componentType").
+	// These values happen to be identical to the matching OpenGL enums.
 	constexpr unsigned int GLTF_COMPONENT_BYTE           = 5120;
 	constexpr unsigned int GLTF_COMPONENT_UNSIGNED_BYTE  = 5121;
 	constexpr unsigned int GLTF_COMPONENT_SHORT          = 5122;
@@ -16,8 +15,7 @@ namespace {
 	constexpr unsigned int GLTF_COMPONENT_FLOAT          = 5126;
 
 	// Reads 'count' tightly packed values of type T starting at 'beginningOfData'
-	// and appends them as GLuints. sizeof(T) supplies the byte stride, so the
-	// element width no longer has to be hard-coded at each call site.
+	// and appends them as GLuints; sizeof(T) supplies the byte stride.
 	template <typename T>
 	void readIndicesAs(
 		const std::vector<unsigned char>& data,
@@ -131,9 +129,8 @@ void Model::traverseNode(unsigned int nextNode, glm::mat4 matrix) {
 
 	glm::quat rotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
 	if (node.find("rotation") != node.end()) {
-		// glTF stores quaternions as [x, y, z, w] (component order), but glm::quat's
-		// constructor takes (w, x, y, z) - so we have to reorder on the way in:
-		// node["rotation"][3] -> w, and [0],[1],[2] -> x,y,z respectively.
+		// glTF stores quaternions as [x, y, z, w], but glm::quat's constructor
+		// takes (w, x, y, z), so the components are reordered on the way in.
 		rotation = glm::quat(
 			node["rotation"][3],
 			node["rotation"][0],

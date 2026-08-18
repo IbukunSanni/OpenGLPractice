@@ -1,8 +1,7 @@
 #version 330 core
 
-// The light-cube fragment shader is intentionally trivial:
-// it outputs the raw light colour with no lighting calculation, so the small
-// marker cube always appears fully lit regardless of scene lighting.
+// Intentionally trivial: outputs the raw light colour with no lighting
+// calculation, so the marker cube always appears fully lit.
 out vec4 FragColor;
 
 in vec4 LightColor; // Colour forwarded from the vertex shader
