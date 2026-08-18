@@ -143,7 +143,7 @@ void run()
 	// Keeps front faces
 	glCullFace(GL_FRONT);
 	// Uses counter clock-wise standard
-	glFrontFace(GL_CCW);
+	glFrontFace(GL_CW);
 	// Configures the blending function
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -152,14 +152,11 @@ void run()
 		"C:/Users/Ibukunoluwa/Documents/Coding/C-C++/OpenGL-VSstudio/OpenGLPractice/Assets";
 	const std::string grassModelPath = assetDirectory + "/Models/grass/scene.gltf";
 	const std::string groundModelPath = assetDirectory + "/Models/ground/scene.gltf";
-	// AGENT: add winPath
-	const std::string winModelPath = assetDirectory + " ";
+	const std::string winModelPath = assetDirectory + "/Models/windows/scene.gltf";
 
 	requireFile(grassModelPath, "grass");
 	requireFile(groundModelPath, "ground");
-	// AGENT: add require file for winPath
-
-
+	requireFile(winModelPath, "windows");
 
 	Model grassModel(grassModelPath.c_str());
 	Model groundModel(groundModelPath.c_str());
@@ -225,8 +222,9 @@ void run()
 			<< "Dir(" << camera.Orientation.x << ", " << camera.Orientation.y << ", " << camera.Orientation.z << ")";
 		glfwSetWindowTitle(window.get(), titleStream.str().c_str());
 
-		groundModel.Draw(shaderProgram, camera);
 		glDisable(GL_CULL_FACE);
+		groundModel.Draw(shaderProgram, camera);
+		
 		grassModel.Draw(grassShaderProgram, camera);
 		glEnable(GL_BLEND);
 
@@ -243,11 +241,6 @@ void run()
 		}
 		glDisable(GL_BLEND);
 		glEnable(GL_CULL_FACE);
-
-
-
-
-
 
 		glfwSwapBuffers(window.get());
 		glfwPollEvents();
