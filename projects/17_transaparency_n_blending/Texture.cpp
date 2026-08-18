@@ -62,8 +62,9 @@ Texture::Texture(const char* image, const char* texType, GLuint slot)
 
     int widthImg, heightImg, numColCh;
 
-    // glTF UV coordinates use the same top-left image convention as stb_image.
-    stbi_set_flip_vertically_on_load(false);
+    // Paired with the mat2 UV rotation in default.vert — these two must change
+    // together, since the models' UVs are authored for that combination.
+    stbi_set_flip_vertically_on_load(true);
     unsigned char* bytes =
         load_texture_bytes(image, widthImg, heightImg, numColCh);
 

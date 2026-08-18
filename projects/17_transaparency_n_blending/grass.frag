@@ -95,26 +95,7 @@ vec4 computeSpotLightColor()
 	return composeLitColor(terms, intensity);
 }
 
-float near = 0.1f;
-float far =100.0f;
-
-float linearizeDepth(float depth){
-	return (2.0* near *far)/ (far +near - (depth * 2.0 -1.0) * (far - near));
-}
-
-float logisticDepth(float depth, float steepness, float offset){
-	float zVal = linearizeDepth(depth);
-	return  (1 / (1 + exp(-steepness * (zVal - offset))));
-}
-
-// Overload with default steepness/offset baked in.
-float logisticDepth(float depth){
-	return logisticDepth(depth, 0.5f, 5.0f);
-}
-
 void main()
 {
-	
 	FragColor = computeDirectionalLightColor();
-
 }
