@@ -79,7 +79,7 @@ void run()
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	WindowPtr window(glfwCreateWindow(width, height, "15_stencil", nullptr, nullptr));
+	WindowPtr window(glfwCreateWindow(width, height, "16_face_culling", nullptr, nullptr));
 	if (!window)
 	{
 		const char* description = nullptr;
@@ -150,7 +150,7 @@ void run()
 		// Display live camera data for choosing reusable viewpoints.
 		std::ostringstream titleStream;
 		titleStream << std::fixed << std::setprecision(2)
-			<< "15_stencil | Pos(" << camera.Position.x << ", " << camera.Position.y << ", " << camera.Position.z << ") "
+			<< "16_face_culling | Pos(" << camera.Position.x << ", " << camera.Position.y << ", " << camera.Position.z << ") "
 			<< "Dir(" << camera.Orientation.x << ", " << camera.Orientation.y << ", " << camera.Orientation.z << ")";
 		glfwSetWindowTitle(window.get(), titleStream.str().c_str());
 
