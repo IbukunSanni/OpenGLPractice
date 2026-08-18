@@ -77,6 +77,7 @@
     <None Include="light.vert" />
     <None Include="outlining.frag" />
     <None Include="outlining.vert" />
+    <None Include="windows.frag" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\..\Assets\Textures\mario_jump.png" />

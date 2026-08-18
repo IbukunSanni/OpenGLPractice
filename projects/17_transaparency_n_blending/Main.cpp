@@ -13,6 +13,22 @@
 constexpr unsigned int width  = 800;
 constexpr unsigned int height = 800;
 
+// Takes care of the information needed to draw the windows
+const unsigned int numWindows = 100;
+glm::vec3 positionsWin[numWindows];
+float rotationsWin[numWindows];
+
+// Takes care of drawing the windows in the right order
+unsigned int orderDraw[numWindows];
+float distanceCamera[numWindows];
+
+// Compare function
+int compare(const void* a, const void* b)
+{
+	double diff = distanceCamera[*(int*)b] - distanceCamera[*(int*)a];
+	return  (0 < diff) - (diff < 0);
+}
+
 // Owns GLFW's process-wide lifetime so every exit path terminates it.
 class GlfwSession
 {
@@ -103,6 +119,9 @@ void run()
 	Shader grassShaderProgram("default.vert", "grass.frag");
 	ShaderGuard grassShaderGuard(grassShaderProgram);
 
+	Shader winShaderProgram("default.vert", "windows.frag");
+	ShaderGuard winShaderGuard(winShaderProgram);
+
 	const glm::vec4 lightColor(1.0f, 1.0f, 1.0f, 1.0f);
 	const glm::vec3 lightPos(0.5f, 0.5f, 0.5f);
 	glm::mat4 lightModel = glm::mat4(1.0f);
@@ -116,19 +135,35 @@ void run()
 	glUniform4f(glGetUniformLocation(grassShaderProgram.ID, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
 	glUniform3f(glGetUniformLocation(grassShaderProgram.ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
 
+	// Enables the Depth Buffer
 	glEnable(GL_DEPTH_TEST);
+
+	// Enables Cull Facing
+	glEnable(GL_CULL_FACE);
+	// Keeps front faces
+	glCullFace(GL_FRONT);
+	// Uses counter clock-wise standard
+	glFrontFace(GL_CCW);
+	// Configures the blending function
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	// Model path parsing requires forward slashes for companion files.
 	const std::string assetDirectory =
 		"C:/Users/Ibukunoluwa/Documents/Coding/C-C++/OpenGL-VSstudio/OpenGLPractice/Assets";
 	const std::string grassModelPath = assetDirectory + "/Models/grass/scene.gltf";
 	const std::string groundModelPath = assetDirectory + "/Models/ground/scene.gltf";
+	// AGENT: add winPath
+	const std::string winModelPath = assetDirectory + " ";
 
 	requireFile(grassModelPath, "grass");
 	requireFile(groundModelPath, "ground");
+	// AGENT: add require file for winPath
+
+
 
 	Model grassModel(grassModelPath.c_str());
 	Model groundModel(groundModelPath.c_str());
+	Model winModel(winModelPath.c_str());
 
 	// Orbit around the ground's world-space bounds center. Ground/grass span
 	// ~50 units, so the camera starts much further back than the statue lesson did.
@@ -144,6 +179,20 @@ void run()
 	unsigned int counter = 0;
 	std::string fps = "...";
 	std::string ms = "...";
+
+
+	// Generates all windows
+	for (unsigned int i = 0; i < numWindows; i++)
+	{
+		positionsWin[i] = glm::vec3
+		(
+			-15.0f + static_cast <float>(rand()) / (static_cast <float>(RAND_MAX / (15.0f - (-15.0f)))),
+			1.0f + static_cast <float>(rand()) / (static_cast <float>(RAND_MAX / (4.0f - 1.0f))),
+			-15.0f + static_cast <float>(rand()) / (static_cast <float>(RAND_MAX / (15.0f - (-15.0f))))
+		);
+		rotationsWin[i] = static_cast <float>(rand()) / (static_cast <float>(RAND_MAX / 1.0f));
+		orderDraw[i] = i;
+	}
 
 	// Render until Escape or the window close button requests shutdown.
 	while (!glfwWindowShouldClose(window.get()))
@@ -177,7 +226,28 @@ void run()
 		glfwSetWindowTitle(window.get(), titleStream.str().c_str());
 
 		groundModel.Draw(shaderProgram, camera);
+		glDisable(GL_CULL_FACE);
 		grassModel.Draw(grassShaderProgram, camera);
+		glEnable(GL_BLEND);
+
+		for (unsigned int i = 0; i < numWindows; i++)
+		{
+			distanceCamera[i] = glm::length(camera.Position - positionsWin[i]);
+		}
+		// Sort windows by distance from camera
+		qsort(orderDraw, numWindows, sizeof(unsigned int), compare);
+		// Draw windows
+		for (unsigned int i = 0; i < numWindows; i++)
+		{
+			winModel.Draw(winShaderProgram, camera, positionsWin[orderDraw[i]], glm::quat(1.0f, 0.0f, rotationsWin[orderDraw[i]], 0.0f));
+		}
+		glDisable(GL_BLEND);
+		glEnable(GL_CULL_FACE);
+
+
+
+
+
 
 		glfwSwapBuffers(window.get());
 		glfwPollEvents();

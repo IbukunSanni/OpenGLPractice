@@ -83,6 +83,7 @@
     <None Include="grass.frag">
       <Filter>Resources\Shaders</Filter>
     </None>
+    <None Include="windows.frag" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Resources">

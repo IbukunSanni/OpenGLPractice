@@ -12,7 +12,15 @@ public:
 	Model(const char* file);
 
 	// Draws every mesh in the model using its own precomputed node transform.
-	void Draw(Shader& shader, Camera& camera);
+	// The T/R/S args place the whole model in the world and default to identity,
+	// so one loaded Model can be drawn at many positions (e.g. the windows).
+	void Draw(
+		Shader& shader,
+		Camera& camera,
+		glm::vec3 translation = glm::vec3(0.0f, 0.0f, 0.0f),
+		glm::quat rotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f),
+		glm::vec3 scale = glm::vec3(1.0f, 1.0f, 1.0f)
+	);
 
 	// Returns the center of the model's transformed world-space bounds.
 	glm::vec3 GetWorldCenter() const;

@@ -92,11 +92,17 @@ Model::Model(const char* file) {
 
 }
 
-void Model::Draw(Shader& shader, Camera& camera) {
-	// Each mesh keeps its own world matrix, computed once in traverseNode().
+void Model::Draw(
+	Shader& shader,
+	Camera& camera,
+	glm::vec3 translation,
+	glm::quat rotation,
+	glm::vec3 scale) {
+	// Each mesh keeps its own world matrix, computed once in traverseNode();
+	// the T/R/S below are applied on top of it to place the whole model.
 	for (unsigned int i = 0; i < meshes.size(); i++)
 	{
-		meshes[i].Mesh::Draw(shader, camera, matricesMeshes[i]);
+		meshes[i].Mesh::Draw(shader, camera, matricesMeshes[i], translation, rotation, scale);
 	}
 }
 
