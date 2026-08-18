@@ -57,7 +57,9 @@
     <ClInclude Include="VBO.h">
       <Filter>Header_Files</Filter>
     </ClInclude>
-    <ClInclude Include="Model.h" />
+    <ClInclude Include="Model.h">
+      <Filter>Header_Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="default.frag">
@@ -76,6 +78,9 @@
       <Filter>Resources\Shaders</Filter>
     </None>
     <None Include="outlining.vert">
+      <Filter>Resources\Shaders</Filter>
+    </None>
+    <None Include="grass.frag">
       <Filter>Resources\Shaders</Filter>
     </None>
   </ItemGroup>

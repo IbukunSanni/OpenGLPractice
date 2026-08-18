@@ -72,6 +72,7 @@
   <ItemGroup>
     <None Include="default.vert" />
     <None Include="default.frag" />
+    <None Include="grass.frag" />
     <None Include="light.frag" />
     <None Include="light.vert" />
     <None Include="outlining.frag" />

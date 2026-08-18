@@ -98,6 +98,11 @@ void run()
 	Shader shaderProgram("default.vert", "default.frag");
 	ShaderGuard shaderGuard(shaderProgram);
 
+	// Same vertex stage as shaderProgram; grass.frag alpha-discards instead
+	// of shading every texel, since the diffuse map is a cutout foliage mask.
+	Shader grassShaderProgram("default.vert", "grass.frag");
+	ShaderGuard grassShaderGuard(grassShaderProgram);
+
 	const glm::vec4 lightColor(1.0f, 1.0f, 1.0f, 1.0f);
 	const glm::vec3 lightPos(0.5f, 0.5f, 0.5f);
 	glm::mat4 lightModel = glm::mat4(1.0f);
@@ -107,26 +112,28 @@ void run()
 	glUniform4f(glGetUniformLocation(shaderProgram.ID, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
 	glUniform3f(glGetUniformLocation(shaderProgram.ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
 
-	glEnable(GL_DEPTH_TEST);
+	grassShaderProgram.Activate();
+	glUniform4f(glGetUniformLocation(grassShaderProgram.ID, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
+	glUniform3f(glGetUniformLocation(grassShaderProgram.ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
 
-	// Discard front-facing polygons (CCW winding), so only back faces render.
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_FRONT);
-	glFrontFace(GL_CW);
+	glEnable(GL_DEPTH_TEST);
 
 	// Model path parsing requires forward slashes for companion files.
 	const std::string assetDirectory =
 		"C:/Users/Ibukunoluwa/Documents/Coding/C-C++/OpenGL-VSstudio/OpenGLPractice/Assets";
-	const std::string modelPath = assetDirectory + "/Models/statue/scene.gltf";
+	const std::string grassModelPath = assetDirectory + "/Models/grass/scene.gltf";
+	const std::string groundModelPath = assetDirectory + "/Models/ground/scene.gltf";
 
-	requireFile(modelPath, "statue");
+	requireFile(grassModelPath, "grass");
+	requireFile(groundModelPath, "ground");
 
-	Model model(modelPath.c_str());
+	Model grassModel(grassModelPath.c_str());
+	Model groundModel(groundModelPath.c_str());
 
-	// Orbit around the loaded model's world-space bounds center. The statue's
-	// mesh is only ~1 unit across, so the camera starts close enough to see it.
-	const glm::vec3 initialCameraPosition(0.0f, 1.0f, 2.5f);
-	const glm::vec3 initialCameraTarget = model.GetWorldCenter();
+	// Orbit around the ground's world-space bounds center. Ground/grass span
+	// ~50 units, so the camera starts much further back than the statue lesson did.
+	const glm::vec3 initialCameraPosition(0.0f, 15.0f, 35.0f);
+	const glm::vec3 initialCameraTarget = groundModel.GetWorldCenter();
 	Camera camera(width, height, initialCameraPosition);
 	camera.LookAt(initialCameraPosition, initialCameraTarget);
 	camera.AttachToWindow(window.get());
@@ -169,7 +176,8 @@ void run()
 			<< "Dir(" << camera.Orientation.x << ", " << camera.Orientation.y << ", " << camera.Orientation.z << ")";
 		glfwSetWindowTitle(window.get(), titleStream.str().c_str());
 
-		model.Draw(shaderProgram, camera);
+		groundModel.Draw(shaderProgram, camera);
+		grassModel.Draw(grassShaderProgram, camera);
 
 		glfwSwapBuffers(window.get());
 		glfwPollEvents();
