@@ -86,8 +86,12 @@
     <None Include="windows.frag">
       <Filter>Resources\Shaders</Filter>
     </None>
-    <None Include="framebuffer.frag" />
-    <None Include="framebuffer.vert" />
+    <None Include="framebuffer.frag">
+      <Filter>Resources\Shaders</Filter>
+    </None>
+    <None Include="framebuffer.vert">
+      <Filter>Resources\Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Resources">

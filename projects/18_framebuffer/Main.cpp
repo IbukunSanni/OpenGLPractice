@@ -133,12 +133,12 @@ void run()
 	// Enables the Depth Buffer
 	glEnable(GL_DEPTH_TEST);
 
-	// Enables Cull Facing
-	glEnable(GL_CULL_FACE);
-	// Keeps front faces
-	glCullFace(GL_FRONT);
-	// Uses counter clock-wise standard
-	glFrontFace(GL_CW);
+	// Face culling disabled for now; re-enable to skip triangles facing away
+	// from the camera. glCullFace names what gets DISCARDED, glFrontFace only
+	// labels which winding counts as front (glTF authors outward faces CCW).
+	// glEnable(GL_CULL_FACE);
+	// glFrontFace(GL_CCW);
+	// glCullFace(GL_BACK);
 	// Configures the blending function
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -228,8 +228,10 @@ void run()
 		glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// Enable depth testing since it's disabled when drawing the framebuffer rectangle
+		// Scene pass wants depth testing; the screen pass below turns it off,
+		// so restore it here at the start of every frame.
 		glEnable(GL_DEPTH_TEST);
+		// glEnable(GL_CULL_FACE);
 
 		if (glfwGetKey(window.get(), GLFW_KEY_ESCAPE) == GLFW_PRESS)
 			glfwSetWindowShouldClose(window.get(), true);
@@ -252,7 +254,11 @@ void run()
 		// Draw the framebuffer rectangle
 		framebufferProgram.Activate();
 		glBindVertexArray(rectVAO);
-		glDisable(GL_DEPTH_TEST); // prevents framebuffer rectangle from being discarded
+		// A screen-space pass should not inherit scene state: depth testing would
+		// reject the quad, and culling would discard it for its clockwise winding.
+		glDisable(GL_DEPTH_TEST);
+		glDisable(GL_CULL_FACE);
+		// Unit 0 is still active, matching the screenTexture uniform set above.
 		glBindTexture(GL_TEXTURE_2D, framebufferTexture);
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 		
