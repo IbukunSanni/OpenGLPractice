@@ -6,6 +6,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "projects", "projects", "{E0
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "18_framebuffer", "projects\18_framebuffer\18_framebuffer.vcxproj", "{6919416E-D4B8-49BB-B0D5-5E146C410698}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "19_Cubemaps_n_Skyboxes", "projects\19_Cubemaps_n_Skyboxes\19_Cubemaps_n_Skyboxes.vcxproj", "{0FB94182-E149-4D2D-BD6B-10F8F4886A72}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -16,6 +18,10 @@ Global
 		{6919416E-D4B8-49BB-B0D5-5E146C410698}.Debug|x64.Build.0 = Debug|x64
 		{6919416E-D4B8-49BB-B0D5-5E146C410698}.Release|x64.ActiveCfg = Release|x64
 		{6919416E-D4B8-49BB-B0D5-5E146C410698}.Release|x64.Build.0 = Release|x64
+		{0FB94182-E149-4D2D-BD6B-10F8F4886A72}.Debug|x64.ActiveCfg = Debug|x64
+		{0FB94182-E149-4D2D-BD6B-10F8F4886A72}.Debug|x64.Build.0 = Debug|x64
+		{0FB94182-E149-4D2D-BD6B-10F8F4886A72}.Release|x64.ActiveCfg = Release|x64
+		{0FB94182-E149-4D2D-BD6B-10F8F4886A72}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
