@@ -10,6 +10,10 @@
 #include <stdexcept>
 #include <string>
 
+// ===== RELOAD TEST, written 11:25:31 — delete this block once checked. =====
+// If Visual Studio shows this without you doing anything, auto-reload works.
+// ===========================================================================
+
 constexpr unsigned int width  = 800;
 constexpr unsigned int height = 800;
 
