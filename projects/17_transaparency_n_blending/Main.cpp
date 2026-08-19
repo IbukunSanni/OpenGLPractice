@@ -151,7 +151,8 @@ void run()
 	const std::string assetDirectory =
 		"C:/Users/Ibukunoluwa/Documents/Coding/C-C++/OpenGL-VSstudio/OpenGLPractice/Assets";
 	const std::string grassModelPath = assetDirectory + "/Models/grass/scene.gltf";
-	const std::string groundModelPath = assetDirectory + "/Models/ground/scene.gltf";
+	// ground_transparency is this lesson's terrain; Models/ground is lesson 14's.
+	const std::string groundModelPath = assetDirectory + "/Models/ground_transparency/scene.gltf";
 	const std::string winModelPath = assetDirectory + "/Models/windows/scene.gltf";
 
 	requireFile(grassModelPath, "grass");

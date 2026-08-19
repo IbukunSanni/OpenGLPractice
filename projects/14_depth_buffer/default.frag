@@ -121,5 +121,7 @@ void main()
 	float fogAmount = depth * 0.35f;
 	FragColor = mix(surfaceColor, fogColor, fogAmount);
 
+	// FragColor = vec4(vec3(logisticDepth(gl_FragCoord.z)), 1.0);
+
 
 }
