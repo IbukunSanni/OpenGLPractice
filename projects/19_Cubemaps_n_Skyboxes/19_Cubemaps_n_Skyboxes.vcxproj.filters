@@ -74,22 +74,10 @@
     <None Include="light.frag">
       <Filter>Resources\Shaders</Filter>
     </None>
-    <None Include="outlining.frag">
+    <None Include="skybox.vert">
       <Filter>Resources\Shaders</Filter>
     </None>
-    <None Include="outlining.vert">
-      <Filter>Resources\Shaders</Filter>
-    </None>
-    <None Include="grass.frag">
-      <Filter>Resources\Shaders</Filter>
-    </None>
-    <None Include="windows.frag">
-      <Filter>Resources\Shaders</Filter>
-    </None>
-    <None Include="framebuffer.frag">
-      <Filter>Resources\Shaders</Filter>
-    </None>
-    <None Include="framebuffer.vert">
+    <None Include="skybox.frag">
       <Filter>Resources\Shaders</Filter>
     </None>
   </ItemGroup>
@@ -100,9 +88,6 @@
     <Filter Include="Resources\Shaders">
       <UniqueIdentifier>{12d8d832-2737-49f8-bb37-c6d95293478f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Resources\Textures">
-      <UniqueIdentifier>{12429a19-b902-4d62-a16d-e0b2e873904f}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header_Files">
       <UniqueIdentifier>{da07b3f3-0e92-4f09-97a9-3fb336cac850}</UniqueIdentifier>
     </Filter>
@@ -111,6 +96,9 @@
     </Filter>
     <Filter Include="Documentation">
       <UniqueIdentifier>{8f1f2c0e-2540-4cbe-a66f-740ef9cb51bf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source_Files\Textures">
+      <UniqueIdentifier>{12429a19-b902-4d62-a16d-e0b2e873904f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

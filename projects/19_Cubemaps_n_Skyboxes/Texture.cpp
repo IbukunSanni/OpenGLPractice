@@ -109,15 +109,15 @@ Texture::Texture(const char* image, const char* texType, GLuint slot)
     case 1:
         sourceFormat = GL_RED;
         break;
-
+    case 2:
+        sourceFormat = GL_RG;
+        break;
     case 3:
         sourceFormat = GL_RGB;
         break;
-
     case 4:
         sourceFormat = GL_RGBA;
         break;
-
     default:
         stbi_image_free(bytes);
         throw std::invalid_argument(
