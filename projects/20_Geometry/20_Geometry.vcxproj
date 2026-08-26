@@ -13,8 +13,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{0FB94182-E149-4D2D-BD6B-10F8F4886A72}</ProjectGuid>
-    <RootNamespace>Cubemaps_n_Skyboxes</RootNamespace>
+    <ProjectGuid>{DFB78F09-FB17-4EC5-A812-DBE56340E025}</ProjectGuid>
+    <RootNamespace>Geometry</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />

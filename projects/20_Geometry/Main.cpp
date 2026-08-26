@@ -114,7 +114,7 @@ void run()
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	WindowPtr window(glfwCreateWindow(width, height, "19_Cubemaps_n_Skyboxes", nullptr, nullptr));
+	WindowPtr window(glfwCreateWindow(width, height, "20_Geometry", nullptr, nullptr));
 	if (!window)
 	{
 		const char* description = nullptr;
@@ -159,7 +159,7 @@ void run()
 	// Model path parsing requires forward slashes for companion files.
 	const std::string assetDirectory =
 		"C:/Users/Ibukunoluwa/Documents/Coding/C-C++/OpenGL-VSstudio/OpenGLPractice/Assets";
-	const std::string modelPath = assetDirectory + "/Models/ornithopter/scene.gltf";
+	const std::string modelPath = assetDirectory + "/Models/bakugo/scene.gltf";
 
 	// All the faces of the cubemap (make sure they are in this exact order)
 	std::array<std::string, 6> facesCubemap =
@@ -299,11 +299,12 @@ void run()
 		// Display live camera data and FPS for choosing reusable viewpoints.
 		std::ostringstream titleStream;
 		titleStream << std::fixed << std::setprecision(2)
-			<< "19_Cubemaps_n_Skyboxes | FPS: " << fps << " | " << ms <<"ms" << " | "
+			<< "20_Geometry | FPS: " << fps << " | " << ms <<"ms" << " | "
 			<< "Pos(" << camera.Position.x << ", " << camera.Position.y << ", " << camera.Position.z << ") "
 			<< "Dir(" << camera.Orientation.x << ", " << camera.Orientation.y << ", " << camera.Orientation.z << ")";
 		glfwSetWindowTitle(window.get(), titleStream.str().c_str());
 
+		// for bakugo, scale and rotation are alterred
 		model.Draw(shaderProgram, camera);
 
 		// Since the cubemap will always have a depth of 1.0, we need that equal sign so it doesn't get discarded
