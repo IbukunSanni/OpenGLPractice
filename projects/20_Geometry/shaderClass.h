@@ -1,6 +1,4 @@
-#ifndef SHADER_CLASS_H
-#define SHADER_CLASS_H
-
+#pragma once
 #include<glad/glad.h>
 #include<string>
 #include<fstream>
@@ -15,8 +13,8 @@ class Shader
 public:
 	// Reference ID of the Shader Program
 	GLuint ID;
-	// Constructor that build the Shader Program from 2 different shaders
-	Shader(const char* vertexFile, const char* fragmentFile);
+	// Constructor that build the Shader Program from 3 different shaders
+	Shader(const char* vertexFile, const char* fragmentFile, const char* geometryFile);
 
 	// Activates the Shader Program
 	void Activate();
@@ -28,4 +26,3 @@ private:
 };
 
 
-#endif
