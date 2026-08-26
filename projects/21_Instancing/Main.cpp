@@ -15,7 +15,7 @@
 // Configuration
 // ===========================================================================
 
-constexpr const char* appName = "20_Geometry";
+constexpr const char* appName = "21_Instancing";
 
 constexpr unsigned int width  = 800;
 constexpr unsigned int height = 800;

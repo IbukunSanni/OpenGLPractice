@@ -68,12 +68,6 @@
     <None Include="default.vert">
       <Filter>Resources\Shaders</Filter>
     </None>
-    <None Include="light.vert">
-      <Filter>Resources\Shaders</Filter>
-    </None>
-    <None Include="light.frag">
-      <Filter>Resources\Shaders</Filter>
-    </None>
     <None Include="skybox.vert">
       <Filter>Resources\Shaders</Filter>
     </None>
@@ -81,15 +75,6 @@
       <Filter>Resources\Shaders</Filter>
     </None>
     <None Include="CODE_WALKTHROUGH.md" />
-    <None Include="default.geom">
-      <Filter>Resources\Shaders</Filter>
-    </None>
-    <None Include="normals.frag">
-      <Filter>Resources\Shaders</Filter>
-    </None>
-    <None Include="normals.geom">
-      <Filter>Resources\Shaders</Filter>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Resources">

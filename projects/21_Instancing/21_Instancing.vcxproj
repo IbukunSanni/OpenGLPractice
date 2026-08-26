@@ -13,8 +13,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{DFB78F09-FB17-4EC5-A812-DBE56340E025}</ProjectGuid>
-    <RootNamespace>Geometry</RootNamespace>
+    <ProjectGuid>{3DC3F20A-67E8-4C48-8F7C-B7A8B77CCADA}</ProjectGuid>
+    <RootNamespace>Instancing</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -71,13 +71,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="CODE_WALKTHROUGH.md" />
-    <None Include="default.geom" />
     <None Include="default.vert" />
     <None Include="default.frag" />
-    <None Include="light.frag" />
-    <None Include="light.vert" />
-    <None Include="normals.frag" />
-    <None Include="normals.geom" />
     <None Include="skybox.frag" />
     <None Include="skybox.vert" />
   </ItemGroup>
