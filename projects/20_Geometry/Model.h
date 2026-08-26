@@ -25,6 +25,10 @@ public:
 	// Returns the center of the model's transformed world-space bounds.
 	glm::vec3 GetWorldCenter() const;
 
+	// Bakes a transform into the model's rest pose, so Draw() treats the result
+	// as if that were the model as loaded. Cumulative: call twice, both apply.
+	void ApplyTransform(const glm::mat4& m);
+
 private:
 	// Variables for easy access
 	const char* file;

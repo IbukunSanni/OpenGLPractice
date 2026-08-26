@@ -1,5 +1,6 @@
 #include "Model.h"
 
+#include <iostream>
 #include <limits>
 #include <stdexcept>
 
@@ -48,6 +49,10 @@ namespace {
 	constexpr const char* GLTF_KEY_PBR_METALLIC_ROUGHNESS      = "pbrMetallicRoughness";
 	constexpr const char* GLTF_KEY_BASE_COLOR_TEXTURE          = "baseColorTexture";
 	constexpr const char* GLTF_KEY_METALLIC_ROUGHNESS_TEXTURE  = "metallicRoughnessTexture";
+	constexpr const char* GLTF_KEY_EXTENSIONS                  = "extensions";
+	constexpr const char* GLTF_KEY_SPECULAR_GLOSSINESS         = "KHR_materials_pbrSpecularGlossiness";
+	constexpr const char* GLTF_KEY_DIFFUSE_TEXTURE             = "diffuseTexture";
+	constexpr const char* GLTF_KEY_SPECULAR_GLOSSINESS_TEXTURE = "specularGlossinessTexture";
 
 	// Reads 'count' tightly packed values of type T starting at 'beginningOfData'
 	// and appends them as GLuints; sizeof(T) supplies the byte stride.
@@ -350,14 +355,33 @@ std::vector<Texture> Model::getTextures(const json& primitive) {
 		return JSON[GLTF_KEY_IMAGES][imageIndex].value(GLTF_KEY_URI, std::string{});
 	};
 
+	// Last-resort guess by filename when the material declares no texture.
+	// Counts matches so it can warn: with more than one candidate every mesh
+	// silently receives the SAME image, so the failure mode is a wrong
+	// texture rather than a missing one -- much harder to spot.
 	auto findImage = [this](const char* first, const char* second) -> std::string {
+		std::string match;
+		unsigned int matchCount = 0;
 		for (const json& image : JSON[GLTF_KEY_IMAGES])
 		{
 			const std::string uri = image.value(GLTF_KEY_URI, std::string{});
 			if (uri.find(first) != std::string::npos || uri.find(second) != std::string::npos)
-				return uri;
+			{
+				if (matchCount == 0)
+					match = uri;
+				matchCount++;
+			}
 		}
-		return {};
+
+		if (matchCount > 1)
+			std::cout << "[Model] WARNING: no material texture for \"" << first
+				<< "\"; " << matchCount << " images match by filename. Guessing \""
+				<< match << "\" for every mesh that lacks one." << std::endl;
+		else if (matchCount == 1)
+			std::cout << "[Model] note: no material texture for \"" << first
+				<< "\"; using the only filename match \"" << match << "\"." << std::endl;
+
+		return match;
 	};
 
 	auto addTexture = [&](const std::string& path, const char* type) {
@@ -401,6 +425,30 @@ std::vector<Texture> Model::getTextures(const json& primitive) {
 				const auto metallicIt = pbr.find(GLTF_KEY_METALLIC_ROUGHNESS_TEXTURE);
 				if (metallicIt != pbr.end())
 					specularPath = imagePathFromTexture(*metallicIt);
+			}
+
+			// Sketchfab and many FBX->glTF converters emit
+			// KHR_materials_pbrSpecularGlossiness instead of the core PBR block,
+			// putting the albedo map under extensions. Without this every material
+			// reads as textureless and falls through to the filename guess above,
+			// which hands every mesh the same image.
+			if (diffusePath.empty())
+			{
+				const auto extIt = material.find(GLTF_KEY_EXTENSIONS);
+				if (extIt != material.end())
+				{
+					const auto sgIt = extIt->find(GLTF_KEY_SPECULAR_GLOSSINESS);
+					if (sgIt != extIt->end())
+					{
+						const auto diffIt = sgIt->find(GLTF_KEY_DIFFUSE_TEXTURE);
+						if (diffIt != sgIt->end())
+							diffusePath = imagePathFromTexture(*diffIt);
+
+						const auto specIt = sgIt->find(GLTF_KEY_SPECULAR_GLOSSINESS_TEXTURE);
+						if (specIt != sgIt->end())
+							specularPath = imagePathFromTexture(*specIt);
+					}
+				}
 			}
 		}
 	}

@@ -175,6 +175,9 @@ void run()
 	requireFile(modelPath, "airplane");
 	Model model(modelPath.c_str());
 
+	// for bakugo, scale is altered
+	model.ApplyTransform(glm::scale(glm::mat4(1.0f), glm::vec3(0.05f)));
+
 	// Skybox cube: position-only. Its texture coordinates aren't stored —
 	// skybox.vert derives them straight from the vertex position instead.
 	unsigned int skyboxVAO, skyboxVBO, skyboxEBO;
