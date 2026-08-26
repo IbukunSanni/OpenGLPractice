@@ -1,5 +1,7 @@
 #include"shaderClass.h"
 
+#include <stdexcept>
+
 // Reads a text file and outputs a string with everything in the text file
 std::string get_file_contents(const char* filename)
 {
@@ -14,7 +16,12 @@ std::string get_file_contents(const char* filename)
 		in.close();
 		return(contents);
 	}
-	throw(errno);
+	// A bare `throw(errno)` throws an int, which is not a std::exception -- it
+	// reached main()'s catch(...) as "unknown exception" with no clue which
+	// file was missing. Name the file and throw something printable.
+	throw std::runtime_error(std::string("Could not open shader file: ") + filename +
+		" (relative paths resolve against the working directory, which must be"
+		" the project folder)");
 }
 
 // Constructor that build the Shader Program from 2 different shaders
@@ -89,9 +96,39 @@ void Shader::Activate()
 }
 
 // Deletes the Shader Program
+Shader::~Shader()
+{
+	Delete();
+}
+
+Shader::Shader(Shader&& other) noexcept : ID(other.ID)
+{
+	// Zeroing the source is what stops the moved-from object from deleting a
+	// program this one now owns.
+	other.ID = 0;
+}
+
+Shader& Shader::operator=(Shader&& other) noexcept
+{
+	if (this != &other)
+	{
+		Delete();
+		ID = other.ID;
+		other.ID = 0;
+	}
+	return *this;
+}
+
 void Shader::Delete()
 {
-	glDeleteProgram(ID);
+	// Guarded so the destructor can follow an explicit Delete() harmlessly, and
+	// so a moved-from Shader releases nothing. glDeleteProgram(0) is a no-op by
+	// spec, but the check also keeps ID honest.
+	if (ID != 0)
+	{
+		glDeleteProgram(ID);
+		ID = 0;
+	}
 }
 
 // Checks if the different Shaders have compiled properly

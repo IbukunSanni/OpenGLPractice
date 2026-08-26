@@ -13,8 +13,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{DFB78F09-FB17-4EC5-A812-DBE56340E025}</ProjectGuid>
-    <RootNamespace>Geometry</RootNamespace>
+    <ProjectGuid>{56119207-131E-4B95-BF3B-5E8EC1859BD2}</ProjectGuid>
+    <RootNamespace>BlinnPhong</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -70,14 +70,13 @@
     <ClInclude Include="Texture.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="asteroid.vert" />
     <None Include="CODE_WALKTHROUGH.md" />
     <None Include="default.geom" />
     <None Include="default.vert" />
-    <None Include="default.frag" />
-    <None Include="light.frag" />
     <None Include="light.vert" />
-    <None Include="normals.frag" />
-    <None Include="normals.geom" />
+    <None Include="light.frag" />
+    <None Include="default.frag" />
     <None Include="skybox.frag" />
     <None Include="skybox.vert" />
   </ItemGroup>

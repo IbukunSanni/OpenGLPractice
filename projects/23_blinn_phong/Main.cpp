@@ -1,4 +1,5 @@
 #include "Model.h"
+#include<math.h>
 
 #include <array>
 #include <cstdlib>
@@ -9,13 +10,15 @@
 #include <memory>
 #include <sstream>
 #include <stdexcept>
+#include <cmath>
 #include <string>
+#include <vector>
 
 // ===========================================================================
 // Configuration
 // ===========================================================================
 
-constexpr const char* appName = "20_Geometry";
+constexpr const char* appName = "23_blinn_phong";
 
 constexpr unsigned int width  = 800;
 constexpr unsigned int height = 800;
@@ -26,10 +29,16 @@ constexpr float fovDegrees = 45.0f;
 constexpr float nearPlane  = 0.1f;
 constexpr float farPlane   = 100.0f;
 
-// bakugo is authored ~187 units across, far wider than the view at the camera
-// distance below. Baked into the model's rest pose at load.
-constexpr float modelScale = 0.05f;
-constexpr float modelPitchDegrees = 90.0f;
+// Both models are authored far larger than the ~29 units of view height at
+// the camera distance below, so each is rescaled into its rest pose at load.
+
+// A large flat plane is the case that makes the Blinn-Phong toggle visible: at
+// grazing angles Phong's reflection vector swings more than 90 degrees from the
+// viewer and the highlight cuts off, while Blinn's halfway vector does not.
+// Scene reproduced from 11_light: a 2x2 plane at the origin and a 0.2 marker
+// cube at the light. Geometry is used exactly as authored there; placement is
+// done with model matrices, same as that lesson.
+constexpr glm::vec3 lightPosition(0.5f, 0.5f, 0.5f);
 
 const std::string assetDirectory =
 	"C:/Users/Ibukunoluwa/Documents/Coding/C-C++/OpenGL-VSstudio/OpenGLPractice/Assets";
@@ -116,6 +125,53 @@ private:
 // ===========================================================================
 // Setup
 // ===========================================================================
+
+
+// A quad in the XZ plane with normals pointing up.
+//
+// Winding matters here: the project culls with GL_FRONT + GL_CW, which keeps
+// triangles that project counter-clockwise. A triangle whose geometric normal
+// faces the viewer projects counter-clockwise, so this order leaves the top
+// face visible from above. Reverse the indices and the floor vanishes.
+// Floor plane, taken verbatim from 11_light. That file lists its attributes as
+// position / colour / texcoord / normal; this project's Vertex struct orders
+// them position / normal / colour / texUV, so they are reordered, not changed.
+Mesh createFloorMesh(std::vector<Texture>& textures)
+{
+	const glm::vec3 up(0.0f, 1.0f, 0.0f);
+	const glm::vec3 black(0.0f, 0.0f, 0.0f);
+
+	std::vector<Vertex> vertices = {
+		{ glm::vec3(-1.0f, 0.0f,  1.0f), up, black, glm::vec2(0.0f, 0.0f) },
+		{ glm::vec3(-1.0f, 0.0f, -1.0f), up, black, glm::vec2(0.0f, 1.0f) },
+		{ glm::vec3( 1.0f, 0.0f, -1.0f), up, black, glm::vec2(1.0f, 1.0f) },
+		{ glm::vec3( 1.0f, 0.0f,  1.0f), up, black, glm::vec2(1.0f, 0.0f) },
+	};
+	std::vector<GLuint> indices = { 0, 1, 2, 0, 2, 3 };
+	return Mesh(vertices, indices, textures);
+}
+
+// Light marker cube, vertices and indices verbatim from 11_light. It renders
+// unlit through light.frag, so normal, colour and UV are never read -- only
+// position matters, and the struct's other fields are filled to satisfy it.
+Mesh createLightCubeMesh()
+{
+	const glm::vec3 zero(0.0f);
+	const float s = 0.1f;
+	std::vector<Vertex> vertices;
+	const glm::vec3 corners[8] = {
+		{ -s, -s,  s }, { -s, -s, -s }, {  s, -s, -s }, {  s, -s,  s },
+		{ -s,  s,  s }, { -s,  s, -s }, {  s,  s, -s }, {  s,  s,  s } };
+	for (const glm::vec3& c : corners)
+		vertices.push_back({ c, zero, zero, glm::vec2(0.0f, 0.0f) });
+
+	std::vector<GLuint> indices = {
+		0, 1, 2,  0, 2, 3,   0, 4, 7,  0, 7, 3,
+		3, 7, 6,  3, 6, 2,   2, 6, 5,  2, 5, 1,
+		1, 5, 4,  1, 4, 0,   4, 5, 6,  4, 6, 7 };
+	std::vector<Texture> none;
+	return Mesh(vertices, indices, none);
+}
 
 // Stop before model parsing when a required asset is missing.
 void requireFile(const std::string& path, const char* assetName)
@@ -279,13 +335,13 @@ void drawSkybox(Shader& shader, const Camera& camera, const SkyboxMesh& mesh, un
 	// The camera sits INSIDE this cube looking at its inner faces, so the
 	// winding that reads as front from outside reads as back from in here --
 	// the cull state tuned for the model would discard the whole thing.
-	glDisable(GL_CULL_FACE);
+	
 	glBindVertexArray(mesh.vao);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap);
 	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
-	glEnable(GL_CULL_FACE);
+
 
 	glDepthFunc(GL_LESS);
 }
@@ -305,14 +361,15 @@ void run()
 	// One lit shader for the model, one unlit shader that samples the cubemap
 	// for the sky behind it.
 	Shader shaderProgram("default.vert", "default.frag", "default.geom");
-	Shader normalsShader("default.vert", "normals.frag", "normals.geom");
 	Shader skyboxShader("skybox.vert", "skybox.frag");
+	// Unlit: emits lightColor flat, with no shading applied to itself.
+	Shader lightShader("light.vert", "light.frag");
 	ShaderGuard shaderGuard(shaderProgram);
-	ShaderGuard normalGuard(normalsShader);
 	ShaderGuard skyboxGuard(skyboxShader);
 
 	const glm::vec4 lightColor(1.0f, 1.0f, 1.0f, 1.0f);
-	const glm::vec3 lightPos(0.5f, 0.5f, 0.5f);
+	// The light lives inside the cube, so the cube reads as its source.
+	const glm::vec3 lightPos = lightPosition;
 
 	shaderProgram.Activate();
 	glUniform4f(glGetUniformLocation(shaderProgram.ID, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
@@ -321,37 +378,41 @@ void run()
 	skyboxShader.Activate();
 	glUniform1i(glGetUniformLocation(skyboxShader.ID, "skybox"), 0);
 
+	lightShader.Activate();
+	glUniform4f(glGetUniformLocation(lightShader.ID, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
+
+
 	// --- pipeline state -----------------------------------------------------
 	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_CULL_FACE);
-	// glFrontFace only labels which winding counts as "front"; glCullFace names
-	// what gets DISCARDED. FRONT+CW here keeps CCW-projected triangles, the
-	// pairing glTF's outward-CCW authoring expects.
-	glCullFace(GL_FRONT);
-	glFrontFace(GL_CW);
 
 	// --- assets -------------------------------------------------------------
 	// Forward slashes throughout: Model resolves its companion .bin and texture
 	// paths by string-slicing this one.
-	const std::string modelPath = assetDirectory + "/Models/bakugo/scene.gltf";
 	const std::array<std::string, 6> facesCubemap =
 	{
-		assetDirectory + "/Skybox/sky_42/right.png",
-		assetDirectory + "/Skybox/sky_42/left.png",
-		assetDirectory + "/Skybox/sky_42/top.png",
-		assetDirectory + "/Skybox/sky_42/bottom.png",
-		assetDirectory + "/Skybox/sky_42/front.png",
-		assetDirectory + "/Skybox/sky_42/back.png"
+		assetDirectory + "/Skybox/space/right.png",
+		assetDirectory + "/Skybox/space/left.png",
+		assetDirectory + "/Skybox/space/top.png",
+		assetDirectory + "/Skybox/space/bottom.png",
+		assetDirectory + "/Skybox/space/front.png",
+		assetDirectory + "/Skybox/space/back.png"
 	};
 
-	requireFile(modelPath, "bakugo");
-	Model model(modelPath.c_str());
-	// Rest pose baked in at load, about the world origin. Uniform scale
-	// commutes with rotation, so the order of these two is cosmetic.
-	glm::mat4 restPose = glm::rotate(glm::mat4(1.0f),
-		glm::radians(modelPitchDegrees), glm::vec3(1.0f, 0.0f, 0.0f));
-	restPose = glm::scale(restPose, glm::vec3(modelScale));
-	model.ApplyTransform(restPose);
+	const std::string planksPath = assetDirectory + "/Textures/planks.png";
+	const std::string planksSpecPath = assetDirectory + "/Textures/planksSpec.png";
+	requireFile(planksPath, "planks");
+	requireFile(planksSpecPath, "planks specular");
+
+	// Shared by floor and cube. Mesh::Draw numbers them into the diffuse0 /
+	// specular0 samplers default.frag expects.
+	std::vector<Texture> planksTextures = {
+		Texture(planksPath.c_str(), "diffuse", 0),
+		Texture(planksSpecPath.c_str(), "specular", 1)
+	};
+	Mesh floorMesh = createFloorMesh(planksTextures);
+	Mesh lightCube = createLightCubeMesh();
+
+
 
 	const SkyboxMesh skybox = createSkyboxMesh();
 	const unsigned int cubemapTexture = loadCubemap(facesCubemap);
@@ -359,12 +420,17 @@ void run()
 	// --- camera -------------------------------------------------------------
 	// Framed on the model's world-space bounds center, which already reflects
 	// the scale baked in above.
-	const glm::vec3 initialCameraPosition(0.0f, 15.0f, 35.0f);
+	const glm::vec3 initialCameraPosition(0.0f, 0.0f, 2.0f);
 	Camera camera(width, height, initialCameraPosition);
-	camera.LookAt(initialCameraPosition, model.GetWorldCenter());
+	camera.LookAt(initialCameraPosition, glm::vec3(0.0f, 0.0f, 0.0f));
 	camera.AttachToWindow(window.get());
 
 	// --- render loop --------------------------------------------------------
+	// Lighting model, flipped live with B so the two can be compared on the
+	// same frame. Both lit programs share default.frag, so both are told.
+	bool useBlinnPhong = true;
+	bool blinnKeyWasDown = false;
+
 	double prevTime = 0.0;
 	unsigned int frameCounter = 0;
 	std::string fps = "...";
@@ -388,6 +454,17 @@ void run()
 		if (glfwGetKey(window.get(), GLFW_KEY_ESCAPE) == GLFW_PRESS)
 			glfwSetWindowShouldClose(window.get(), true);
 
+		// Edge-detected: without the was-down check, holding B would flip the
+		// model every single frame instead of once per press.
+		const bool blinnKeyDown = glfwGetKey(window.get(), GLFW_KEY_B) == GLFW_PRESS;
+		if (blinnKeyDown && !blinnKeyWasDown)
+		{
+			useBlinnPhong = !useBlinnPhong;
+			std::cout << "Lighting: " << (useBlinnPhong ? "Blinn-Phong" : "Phong")
+				<< std::endl;
+		}
+		blinnKeyWasDown = blinnKeyDown;
+
 		camera.Inputs(window.get());
 		camera.UpdateMatrix(fovDegrees, nearPlane, farPlane);
 		glfwSetWindowTitle(window.get(), formatTitle(fps, ms, camera).c_str());
@@ -395,8 +472,24 @@ void run()
 		glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		model.Draw(shaderProgram, camera);
-		model.Draw(normalsShader, camera);
+		// Uploaded per frame so the B toggle takes effect immediately. A uniform
+		// belongs to a program, so each one must be Activated before it is set.
+		shaderProgram.Activate();
+		glUniform1i(glGetUniformLocation(shaderProgram.ID, "useBlinnPhong"), useBlinnPhong);
+
+		// Both ride the existing pipeline -- geometry shader, default.frag and the
+		// Blinn-Phong toggle all apply with no extra shader.
+		// Culling off for the plane: it is a single quad with one winding, so the
+		// underside would otherwise vanish the moment the camera drops below it.
+	
+		floorMesh.Draw(shaderProgram, camera, glm::mat4(1.0f));
+	
+
+		lightCube.Draw(lightShader, camera,
+			glm::translate(glm::mat4(1.0f), lightPosition));
+
+
+	
 		drawSkybox(skyboxShader, camera, skybox, cubemapTexture);
 
 		glfwSwapBuffers(window.get());

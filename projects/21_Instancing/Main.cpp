@@ -1,4 +1,5 @@
 #include "Model.h"
+#include<math.h>
 
 #include <array>
 #include <cstdlib>
@@ -9,13 +10,15 @@
 #include <memory>
 #include <sstream>
 #include <stdexcept>
+#include <cmath>
 #include <string>
+#include <vector>
 
 // ===========================================================================
 // Configuration
 // ===========================================================================
 
-constexpr const char* appName = "20_Geometry";
+constexpr const char* appName = "21_Instancing";
 
 constexpr unsigned int width  = 800;
 constexpr unsigned int height = 800;
@@ -26,10 +29,20 @@ constexpr float fovDegrees = 45.0f;
 constexpr float nearPlane  = 0.1f;
 constexpr float farPlane   = 100.0f;
 
-// bakugo is authored ~187 units across, far wider than the view at the camera
-// distance below. Baked into the model's rest pose at load.
-constexpr float modelScale = 0.05f;
-constexpr float modelPitchDegrees = 90.0f;
+// Both models are authored far larger than the ~29 units of view height at
+// the camera distance below, so each is rescaled into its rest pose at load.
+// jupiter is a 37.27-unit sphere centred on the origin; the asteroid is 9.36
+// units and only 990 triangles -- which is why it is the one worth instancing.
+constexpr float jupiterScale  = 0.27f;    // -> ~10.1 units across
+constexpr float asteroidScale = 0.085f;   
+constexpr float asteroidOrbit = 15.0f;    // ring radius, in world units
+
+// Naive baseline: this many separate Draw calls per frame, one asteroid each.
+// Instancing replaces the whole loop with a single call -- watch the FPS
+// readout in the title bar before and after to see what it buys.
+constexpr unsigned int asteroidCount = 8000;
+constexpr float orbitSpread = 6.5f;       // radial + vertical scatter
+constexpr float twoPi = 6.28318530718f;
 
 const std::string assetDirectory =
 	"C:/Users/Ibukunoluwa/Documents/Coding/C-C++/OpenGL-VSstudio/OpenGLPractice/Assets";
@@ -116,6 +129,19 @@ private:
 // ===========================================================================
 // Setup
 // ===========================================================================
+
+// Uniform random float in [-1, 1].
+//
+// rand() lands in [0, RAND_MAX]; dividing by RAND_MAX/2.0f maps that to
+// [0, 2], and the -1.0f shifts it to [-1, 1]. The 2.0f matters -- an integer
+// RAND_MAX/2 would truncate and the division would collapse to 0 or 1.
+//
+// srand() is never called, so the sequence is identical on every run. That
+// keeps the asteroid field reproducible; seed it if you want variety.
+float randf()
+{
+	return -1.0f + (rand() / (RAND_MAX / 2.0f));
+}
 
 // Stop before model parsing when a required asset is missing.
 void requireFile(const std::string& path, const char* assetName)
@@ -305,10 +331,9 @@ void run()
 	// One lit shader for the model, one unlit shader that samples the cubemap
 	// for the sky behind it.
 	Shader shaderProgram("default.vert", "default.frag", "default.geom");
-	Shader normalsShader("default.vert", "normals.frag", "normals.geom");
 	Shader skyboxShader("skybox.vert", "skybox.frag");
+	Shader asteroidShader("asteroid.vert", "default.frag");
 	ShaderGuard shaderGuard(shaderProgram);
-	ShaderGuard normalGuard(normalsShader);
 	ShaderGuard skyboxGuard(skyboxShader);
 
 	const glm::vec4 lightColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -320,6 +345,10 @@ void run()
 
 	skyboxShader.Activate();
 	glUniform1i(glGetUniformLocation(skyboxShader.ID, "skybox"), 0);
+
+	asteroidShader.Activate();
+	glUniform4f(glGetUniformLocation(asteroidShader.ID, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
+	glUniform3f(glGetUniformLocation(asteroidShader.ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
 
 	// --- pipeline state -----------------------------------------------------
 	glEnable(GL_DEPTH_TEST);
@@ -333,25 +362,79 @@ void run()
 	// --- assets -------------------------------------------------------------
 	// Forward slashes throughout: Model resolves its companion .bin and texture
 	// paths by string-slicing this one.
-	const std::string modelPath = assetDirectory + "/Models/bakugo/scene.gltf";
+	const std::string jupiterPath  = assetDirectory + "/Models/jupiter/scene.gltf";
+	const std::string asteroidPath = assetDirectory + "/Models/asteroid/scene.gltf";
 	const std::array<std::string, 6> facesCubemap =
 	{
-		assetDirectory + "/Skybox/sky_42/right.png",
-		assetDirectory + "/Skybox/sky_42/left.png",
-		assetDirectory + "/Skybox/sky_42/top.png",
-		assetDirectory + "/Skybox/sky_42/bottom.png",
-		assetDirectory + "/Skybox/sky_42/front.png",
-		assetDirectory + "/Skybox/sky_42/back.png"
+		assetDirectory + "/Skybox/space/right.png",
+		assetDirectory + "/Skybox/space/left.png",
+		assetDirectory + "/Skybox/space/top.png",
+		assetDirectory + "/Skybox/space/bottom.png",
+		assetDirectory + "/Skybox/space/front.png",
+		assetDirectory + "/Skybox/space/back.png"
 	};
 
-	requireFile(modelPath, "bakugo");
-	Model model(modelPath.c_str());
-	// Rest pose baked in at load, about the world origin. Uniform scale
-	// commutes with rotation, so the order of these two is cosmetic.
-	glm::mat4 restPose = glm::rotate(glm::mat4(1.0f),
-		glm::radians(modelPitchDegrees), glm::vec3(1.0f, 0.0f, 0.0f));
-	restPose = glm::scale(restPose, glm::vec3(modelScale));
-	model.ApplyTransform(restPose);
+	requireFile(jupiterPath, "jupiter");
+	requireFile(asteroidPath, "asteroid");
+	Model jupiter(jupiterPath.c_str());
+
+
+	// Rest poses baked in at load. ApplyTransform pre-multiplies each mesh node
+	// matrix, so these act in world space and GetWorldCenter() below already
+	// reflects them.
+	jupiter.ApplyTransform(glm::scale(glm::mat4(1.0f), glm::vec3(jupiterScale)));
+
+	// One world transform per asteroid, built once. Nothing is baked into the
+	// model's rest pose now -- a single Model is drawn at every one of these,
+	// which is exactly the workload instancing collapses into one call.
+	std::vector<glm::mat4> asteroidTransforms;
+	asteroidTransforms.reserve(asteroidCount);
+	for (unsigned int i = 0; i < asteroidCount; i++)
+	{
+		// Generates x and y for the function x^2 + y^2 = radius^2 which is a circle
+		float x = randf();
+		float finalRadius = asteroidOrbit + randf() * orbitSpread;
+		float y = ((rand() % 2) * 2 - 1) * sqrt(1.0f - x * x);
+
+		// Holds transformations before multiplying them
+		glm::vec3 tempTranslation;
+		glm::quat tempRotation;
+		glm::vec3 tempScale;
+
+		// Makes the random distribution more even
+		if (randf() > 0.5f)
+		{
+			// Generates a translation near a circle of radius "radius"
+			tempTranslation = glm::vec3(y * finalRadius, randf(), x * finalRadius);
+		}
+		else
+		{
+			// Generates a translation near a circle of radius "radius"
+			tempTranslation = glm::vec3(x * finalRadius, randf(), y * finalRadius);
+		}
+
+		// Generates random rotations
+		tempRotation = glm::quat(1.0f, randf(), randf(), randf());
+		// Generates random scales
+		tempScale = 0.1f * glm::vec3(randf(), randf(), randf());
+
+		// Initialize matrices
+		glm::mat4 trans = glm::mat4(1.0f);
+		glm::mat4 rot = glm::mat4(1.0f);
+		glm::mat4 sca = glm::mat4(1.0f);
+
+		// Transform the matrices to their correct form
+		trans = glm::translate(trans, tempTranslation);
+		rot = glm::mat4_cast(tempRotation);
+		sca = glm::scale(sca, tempScale);
+
+		// Push matrix transformation
+		asteroidTransforms.push_back(trans * rot * sca);
+	}
+
+	Model asteroid(asteroidPath.c_str());
+	asteroid.ApplyTransform(glm::scale(glm::mat4(1.0f), glm::vec3(asteroidScale)));
+
 
 	const SkyboxMesh skybox = createSkyboxMesh();
 	const unsigned int cubemapTexture = loadCubemap(facesCubemap);
@@ -361,7 +444,7 @@ void run()
 	// the scale baked in above.
 	const glm::vec3 initialCameraPosition(0.0f, 15.0f, 35.0f);
 	Camera camera(width, height, initialCameraPosition);
-	camera.LookAt(initialCameraPosition, model.GetWorldCenter());
+	camera.LookAt(initialCameraPosition, jupiter.GetWorldCenter());
 	camera.AttachToWindow(window.get());
 
 	// --- render loop --------------------------------------------------------
@@ -395,8 +478,11 @@ void run()
 		glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		model.Draw(shaderProgram, camera);
-		model.Draw(normalsShader, camera);
+		jupiter.Draw(shaderProgram, camera);
+		for (const glm::mat4& pose : asteroidTransforms)
+			asteroid.Draw(shaderProgram, camera, pose);
+
+	
 		drawSkybox(skyboxShader, camera, skybox, cubemapTexture);
 
 		glfwSwapBuffers(window.get());

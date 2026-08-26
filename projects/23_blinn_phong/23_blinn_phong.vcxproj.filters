@@ -65,13 +65,13 @@
     <None Include="default.frag">
       <Filter>Resources\Shaders</Filter>
     </None>
-    <None Include="default.vert">
-      <Filter>Resources\Shaders</Filter>
-    </None>
     <None Include="light.vert">
-      <Filter>Resources\Shaders</Filter>
+      <Filter>Shaders</Filter>
     </None>
     <None Include="light.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="default.vert">
       <Filter>Resources\Shaders</Filter>
     </None>
     <None Include="skybox.vert">
@@ -84,10 +84,7 @@
     <None Include="default.geom">
       <Filter>Resources\Shaders</Filter>
     </None>
-    <None Include="normals.frag">
-      <Filter>Resources\Shaders</Filter>
-    </None>
-    <None Include="normals.geom">
+    <None Include="asteroid.vert">
       <Filter>Resources\Shaders</Filter>
     </None>
   </ItemGroup>

@@ -18,9 +18,21 @@ public:
 	// geometry shader. Omit it (or pass nullptr) to build exactly as before.
 	Shader(const char* vertexFile, const char* fragmentFile, const char* geometryFile = nullptr);
 
+	// Releases the program. Nothing else has to remember to do it, which is why
+	// there is no separate guard object.
+	~Shader();
+
+	// The program handle is owned, so copying would let two Shaders call
+	// glDeleteProgram on the same ID. Moving transfers ownership instead and
+	// leaves the source with nothing to release.
+	Shader(const Shader&) = delete;
+	Shader& operator=(const Shader&) = delete;
+	Shader(Shader&& other) noexcept;
+	Shader& operator=(Shader&& other) noexcept;
+
 	// Activates the Shader Program
 	void Activate();
-	// Deletes the Shader Program
+	// Deletes the Shader Program. Safe to call more than once.
 	void Delete();
 private:
 	// Checks if the different Shaders have compiled properly
