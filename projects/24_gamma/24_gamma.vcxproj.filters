@@ -65,12 +65,6 @@
     <None Include="default.frag">
       <Filter>Resources\Shaders</Filter>
     </None>
-    <None Include="light.vert">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="light.frag">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="default.vert">
       <Filter>Resources\Shaders</Filter>
     </None>
@@ -85,6 +79,18 @@
       <Filter>Resources\Shaders</Filter>
     </None>
     <None Include="asteroid.vert">
+      <Filter>Resources\Shaders</Filter>
+    </None>
+    <None Include="light.frag">
+      <Filter>Resources\Shaders</Filter>
+    </None>
+    <None Include="light.vert">
+      <Filter>Resources\Shaders</Filter>
+    </None>
+    <None Include="framebuffer.vert">
+      <Filter>Resources\Shaders</Filter>
+    </None>
+    <None Include="framebuffer.frag">
       <Filter>Resources\Shaders</Filter>
     </None>
   </ItemGroup>

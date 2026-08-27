@@ -103,6 +103,8 @@ Texture::Texture(const char* image, const char* texType, GLuint slot)
 
     // Determine the format of the source image data
     GLenum sourceFormat;
+    GLuint internalFormat = GL_SRGB;
+    
 
     switch (numColCh)
     {
@@ -116,6 +118,7 @@ Texture::Texture(const char* image, const char* texType, GLuint slot)
         sourceFormat = GL_RGB;
         break;
     case 4:
+        internalFormat = GL_SRGB_ALPHA;
         sourceFormat = GL_RGBA;
         break;
     default:
@@ -129,7 +132,7 @@ Texture::Texture(const char* image, const char* texType, GLuint slot)
     glTexImage2D(
         GL_TEXTURE_2D,
         0,
-        GL_RGBA,
+        internalFormat,
         widthImg,
         heightImg,
         0,
@@ -170,4 +173,31 @@ void Texture::Unbind()
 void Texture::Delete()
 {
 	glDeleteTextures(1, &ID);
+}
+
+
+Texture::Texture(const unsigned char* pixels, int width, int height,
+	const char* texType, GLuint slot, bool smooth)
+{
+	type = texType;
+	unit = slot;
+
+	glGenTextures(1, &ID);
+	glActiveTexture(GL_TEXTURE0 + slot);
+	glBindTexture(GL_TEXTURE_2D, ID);
+
+	// NEAREST for the checker: the point of it is to be unmistakable, and
+	// filtering a 16x16 pattern into grey mush defeats that. Flat colours pass
+	// smooth = true, where it makes no difference either way.
+	const GLint filter = smooth ? GL_LINEAR : GL_NEAREST;
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0,
+		GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+	glGenerateMipmap(GL_TEXTURE_2D);
+
+	glBindTexture(GL_TEXTURE_2D, 0);
 }

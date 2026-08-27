@@ -74,6 +74,8 @@
     <None Include="CODE_WALKTHROUGH.md" />
     <None Include="default.geom" />
     <None Include="default.vert" />
+    <None Include="framebuffer.frag" />
+    <None Include="framebuffer.vert" />
     <None Include="light.vert" />
     <None Include="light.frag" />
     <None Include="default.frag" />

@@ -53,6 +53,8 @@ namespace {
 	constexpr const char* GLTF_KEY_SPECULAR_GLOSSINESS         = "KHR_materials_pbrSpecularGlossiness";
 	constexpr const char* GLTF_KEY_DIFFUSE_TEXTURE             = "diffuseTexture";
 	constexpr const char* GLTF_KEY_SPECULAR_GLOSSINESS_TEXTURE = "specularGlossinessTexture";
+	constexpr const char* GLTF_KEY_BASE_COLOR_FACTOR           = "baseColorFactor";
+	constexpr const char* GLTF_KEY_DIFFUSE_FACTOR              = "diffuseFactor";
 
 	// Reads 'count' tightly packed values of type T starting at 'beginningOfData'
 	// and appends them as GLuints; sizeof(T) supplies the byte stride.
@@ -382,29 +384,40 @@ std::vector<Texture> Model::getTextures(const json& primitive) {
 	// Counts matches so it can warn: with more than one candidate every mesh
 	// silently receives the SAME image, so the failure mode is a wrong
 	// texture rather than a missing one -- much harder to spot.
-	auto findImage = [this](const char* first, const char* second) -> std::string {
-		std::string match;
-		unsigned int matchCount = 0;
-		for (const json& image : JSON[GLTF_KEY_IMAGES])
+	// A flat colour, shaped as a 1x1 texture. A material with no map is not
+	// broken -- glTF lets it carry only a baseColorFactor, and the spec defaults
+	// that to white when absent. Handing the shader one pixel of that colour lets
+	// the whole pipeline stay texture-based with no branch and no extra uniform.
+	auto solidColorTexture = [](const json& factor, const char* type, GLuint slot) {
+		unsigned char px[4] = { 255, 255, 255, 255 };
+		if (factor.is_array() && factor.size() >= 3)
 		{
-			const std::string uri = image.value(GLTF_KEY_URI, std::string{});
-			if (uri.find(first) != std::string::npos || uri.find(second) != std::string::npos)
+			for (unsigned int c = 0; c < 4 && c < factor.size(); c++)
 			{
-				if (matchCount == 0)
-					match = uri;
-				matchCount++;
+				const float v = factor[c].get<float>();
+				px[c] = static_cast<unsigned char>(glm::clamp(v, 0.0f, 1.0f) * 255.0f);
 			}
 		}
+		return Texture(px, 1, 1, type, slot);
+	};
 
-		if (matchCount > 1)
-			std::cout << "[Model] WARNING: no material texture for \"" << first
-				<< "\"; " << matchCount << " images match by filename. Guessing \""
-				<< match << "\" for every mesh that lacks one." << std::endl;
-		else if (matchCount == 1)
-			std::cout << "[Model] note: no material texture for \"" << first
-				<< "\"; using the only filename match \"" << match << "\"." << std::endl;
-
-		return match;
+	// The classic missing-texture checker. Generated rather than loaded, so there
+	// is no asset that can itself go missing, and deliberately ugly: this should
+	// never be mistaken for someone's intended material.
+	auto checkerTexture = [](const char* type, GLuint slot) {
+		constexpr int N = 16, CELL = 4;
+		unsigned char px[N * N * 4];
+		for (int y = 0; y < N; y++)
+		{
+			for (int x = 0; x < N; x++)
+			{
+				const bool light = ((x / CELL) + (y / CELL)) % 2 == 0;
+				unsigned char* q = px + (y * N + x) * 4;
+				q[0] = q[1] = q[2] = light ? 230 : 90;
+				q[3] = 255;
+			}
+		}
+		return Texture(px, N, N, type, slot, false);
 	};
 
 	auto addTexture = [&](const std::string& path, const char* type) {
@@ -430,6 +443,8 @@ std::vector<Texture> Model::getTextures(const json& primitive) {
 
 	std::string diffusePath;
 	std::string specularPath;
+	// Absent means white, per the glTF spec's default for baseColorFactor.
+	json baseColorFactor;
 
 	if (primitive.find(GLTF_KEY_MATERIAL) != primitive.end())
 	{
@@ -444,6 +459,10 @@ std::vector<Texture> Model::getTextures(const json& primitive) {
 				const auto baseColorIt = pbr.find(GLTF_KEY_BASE_COLOR_TEXTURE);
 				if (baseColorIt != pbr.end())
 					diffusePath = imagePathFromTexture(*baseColorIt);
+
+				const auto factorIt = pbr.find(GLTF_KEY_BASE_COLOR_FACTOR);
+				if (factorIt != pbr.end())
+					baseColorFactor = *factorIt;
 
 				const auto metallicIt = pbr.find(GLTF_KEY_METALLIC_ROUGHNESS_TEXTURE);
 				if (metallicIt != pbr.end())
@@ -467,6 +486,10 @@ std::vector<Texture> Model::getTextures(const json& primitive) {
 						if (diffIt != sgIt->end())
 							diffusePath = imagePathFromTexture(*diffIt);
 
+						const auto dfIt = sgIt->find(GLTF_KEY_DIFFUSE_FACTOR);
+						if (dfIt != sgIt->end() && baseColorFactor.is_null())
+							baseColorFactor = *dfIt;
+
 						const auto specIt = sgIt->find(GLTF_KEY_SPECULAR_GLOSSINESS_TEXTURE);
 						if (specIt != sgIt->end())
 							specularPath = imagePathFromTexture(*specIt);
@@ -476,14 +499,48 @@ std::vector<Texture> Model::getTextures(const json& primitive) {
 		}
 	}
 
-	// Fall back for incomplete exports or assets that use semantic filenames.
-	if (diffusePath.empty())
-		diffusePath = findImage("baseColor", "diffuse");
-	if (specularPath.empty())
-		specularPath = findImage("metallicRoughness", "specular");
-
+	// Resolution order. The filename guess that used to live here is gone on
+	// purpose: it turned "no data" into confidently wrong data, painting one
+	// model's only image across every mesh that lacked a map of its own.
+	//
+	//   1. a declared texture that loads          -> use it
+	//   2. no texture but a colour factor         -> 1x1 of that colour
+	//   3. a texture declared that will not load  -> checker + warning
+	const std::size_t before = textures.size();
 	addTexture(diffusePath, "diffuse");
+
+	if (textures.size() == before)
+	{
+		if (!diffusePath.empty())
+		{
+			std::cout << "[Model] WARNING: material declares diffuse texture \""
+				<< diffusePath << "\" but it could not be loaded; using the "
+				<< "missing-texture checker." << std::endl;
+			textures.push_back(checkerTexture("diffuse", static_cast<GLuint>(loadedTex.size())));
+		}
+		else
+		{
+			// Untextured by design: solid-colour material, not a failure.
+			textures.push_back(solidColorTexture(baseColorFactor, "diffuse",
+				static_cast<GLuint>(loadedTex.size())));
+		}
+		loadedTex.push_back(textures.back());
+		loadedTexName.push_back(std::string());
+	}
+
+	const std::size_t beforeSpec = textures.size();
 	addTexture(specularPath, "specular");
+	if (textures.size() == beforeSpec)
+	{
+		// No specular map. Black means "no specular contribution" rather than
+		// leaving specular0 unbound, which samples whatever happens to be there.
+		const json black = json::array({ 0.0f, 0.0f, 0.0f, 1.0f });
+		textures.push_back(solidColorTexture(black, "specular",
+			static_cast<GLuint>(loadedTex.size())));
+		loadedTex.push_back(textures.back());
+		loadedTexName.push_back(std::string());
+	}
+
 	return textures;
 }
 // Zips the parallel positions/normals/UVs arrays into one Vertex per index.
