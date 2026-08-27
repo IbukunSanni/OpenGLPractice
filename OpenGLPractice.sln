@@ -6,6 +6,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "projects", "projects", "{E0
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "23_blinn_phong", "projects\23_blinn_phong\23_blinn_phong.vcxproj", "{56119207-131E-4B95-BF3B-5E8EC1859BD2}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "24_gamma", "projects\24_gamma\24_gamma.vcxproj", "{18F4B8EA-6ADD-4C6D-B437-76112A34E85E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -16,6 +18,10 @@ Global
 		{56119207-131E-4B95-BF3B-5E8EC1859BD2}.Debug|x64.Build.0 = Debug|x64
 		{56119207-131E-4B95-BF3B-5E8EC1859BD2}.Release|x64.ActiveCfg = Release|x64
 		{56119207-131E-4B95-BF3B-5E8EC1859BD2}.Release|x64.Build.0 = Release|x64
+		{18F4B8EA-6ADD-4C6D-B437-76112A34E85E}.Debug|x64.ActiveCfg = Debug|x64
+		{18F4B8EA-6ADD-4C6D-B437-76112A34E85E}.Debug|x64.Build.0 = Debug|x64
+		{18F4B8EA-6ADD-4C6D-B437-76112A34E85E}.Release|x64.ActiveCfg = Release|x64
+		{18F4B8EA-6ADD-4C6D-B437-76112A34E85E}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
