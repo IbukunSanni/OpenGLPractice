@@ -398,8 +398,11 @@ void run()
 		assetDirectory + "/Skybox/space/back.png"
 	};
 
+	const std::string mach6Path = assetDirectory + "/Models/mach_6/scene.gltf";
 	const std::string planksPath = assetDirectory + "/Textures/planks.png";
 	const std::string planksSpecPath = assetDirectory + "/Textures/planksSpec.png";
+	
+	requireFile(mach6Path, "mach_6");
 	requireFile(planksPath, "planks");
 	requireFile(planksSpecPath, "planks specular");
 
@@ -409,10 +412,14 @@ void run()
 		Texture(planksPath.c_str(), "diffuse", 0),
 		Texture(planksSpecPath.c_str(), "specular", 1)
 	};
+	Model mach6Model(mach6Path.c_str());
+
+	glm::mat4 restPose = glm::mat4(1.0f);
+	restPose = glm::scale(restPose, glm::vec3(0.05f));
+	mach6Model.ApplyTransform(restPose);
+
 	Mesh floorMesh = createFloorMesh(planksTextures);
-	Mesh lightCube = createLightCubeMesh();
-
-
+	Mesh lightCube = createLightCubeMesh();	
 
 	const SkyboxMesh skybox = createSkyboxMesh();
 	const unsigned int cubemapTexture = loadCubemap(facesCubemap);
@@ -481,15 +488,13 @@ void run()
 		// Blinn-Phong toggle all apply with no extra shader.
 		// Culling off for the plane: it is a single quad with one winding, so the
 		// underside would otherwise vanish the moment the camera drops below it.
+		mach6Model.Draw(shaderProgram, camera);
 	
 		floorMesh.Draw(shaderProgram, camera, glm::mat4(1.0f));
 	
-
 		lightCube.Draw(lightShader, camera,
 			glm::translate(glm::mat4(1.0f), lightPosition));
 
-
-	
 		drawSkybox(skyboxShader, camera, skybox, cubemapTexture);
 
 		glfwSwapBuffers(window.get());
