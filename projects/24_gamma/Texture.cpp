@@ -101,25 +101,32 @@ Texture::Texture(const char* image, const char* texType, GLuint slot)
         GL_REPEAT
     );
 
-    // Determine the format of the source image data
+    // Only COLOUR maps are sRGB-encoded. Specular, roughness and normal maps hold
+    // linear measurements, not colours -- decoding those through the sRGB curve
+    // darkens the values and quietly corrupts the lighting that reads them.
+    // One- and two-channel images cannot be sRGB at all; the format does not exist.
+    const bool isColorMap = (type == "diffuse");
+
     GLenum sourceFormat;
-    GLuint internalFormat = GL_SRGB;
-    
+    GLint internalFormat;
 
     switch (numColCh)
     {
     case 1:
         sourceFormat = GL_RED;
+        internalFormat = GL_R8;
         break;
     case 2:
         sourceFormat = GL_RG;
+        internalFormat = GL_RG8;
         break;
     case 3:
         sourceFormat = GL_RGB;
+        internalFormat = isColorMap ? GL_SRGB8 : GL_RGB8;
         break;
     case 4:
-        internalFormat = GL_SRGB_ALPHA;
         sourceFormat = GL_RGBA;
+        internalFormat = isColorMap ? GL_SRGB8_ALPHA8 : GL_RGBA8;
         break;
     default:
         stbi_image_free(bytes);

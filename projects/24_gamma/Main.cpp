@@ -23,6 +23,9 @@ constexpr const char* appName = "24_gamma";
 constexpr unsigned int width  = 800;
 constexpr unsigned int height = 800;
 
+// Controls the gamma function
+constexpr float gamma = 2.2f;
+
 // The model pass and the skybox pass build their projections separately, so
 // these must stay shared -- if they drift apart the horizon no longer lines up.
 constexpr float fovDegrees = 45.0f;
@@ -289,7 +292,8 @@ unsigned int loadCubemap(const std::array<std::string, 6>& faces)
 				std::to_string(faceChannels) + " (" + faces[i] + ")");
 		}
 
-		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA,
+		// The sky is colour, so it is sRGB-encoded like any other colour map.
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_SRGB8_ALPHA8,
 			faceWidth, faceHeight, 0, sourceFormat, GL_UNSIGNED_BYTE, data);
 		stbi_image_free(data);
 	}
@@ -362,10 +366,13 @@ void run()
 	// for the sky behind it.
 	Shader shaderProgram("default.vert", "default.frag", "default.geom");
 	Shader skyboxShader("skybox.vert", "skybox.frag");
+	Shader framebufferProgram("framebuffer.vert", "framebuffer.frag");
 	// Unlit: emits lightColor flat, with no shading applied to itself.
 	Shader lightShader("light.vert", "light.frag");
 	ShaderGuard shaderGuard(shaderProgram);
 	ShaderGuard skyboxGuard(skyboxShader);
+	ShaderGuard framebufferGuard(framebufferProgram);
+	ShaderGuard lightGuard(lightShader);
 
 	const glm::vec4 lightColor(1.0f, 1.0f, 1.0f, 1.0f);
 	// The light lives inside the cube, so the cube reads as its source.
@@ -381,8 +388,17 @@ void run()
 	lightShader.Activate();
 	glUniform4f(glGetUniformLocation(lightShader.ID, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
 
+	framebufferProgram.Activate();
+	glUniform1i(glGetUniformLocation(framebufferProgram.ID, "screenTexture"), 0);
+	glUniform1f(glGetUniformLocation(framebufferProgram.ID, "gamma"), gamma);
+
 
 	// --- pipeline state -----------------------------------------------------
+	// The other half of gamma correction. Inputs are decoded to linear when
+	// sampled; this re-encodes the final colour to sRGB on write. Without it,
+	// linearising the inputs alone just makes everything look too dark.
+	glEnable(GL_FRAMEBUFFER_SRGB);
+
 	glEnable(GL_DEPTH_TEST);
 
 	// --- assets -------------------------------------------------------------
@@ -438,6 +454,10 @@ void run()
 	bool useBlinnPhong = true;
 	bool blinnKeyWasDown = false;
 
+	// G toggles the output encoding so the difference is visible side by side.
+	bool gammaCorrect = true;
+	bool gammaKeyWasDown = false;
+
 	double prevTime = 0.0;
 	unsigned int frameCounter = 0;
 	std::string fps = "...";
@@ -472,11 +492,21 @@ void run()
 		}
 		blinnKeyWasDown = blinnKeyDown;
 
+		const bool gammaKeyDown = glfwGetKey(window.get(), GLFW_KEY_G) == GLFW_PRESS;
+		if (gammaKeyDown && !gammaKeyWasDown)
+		{
+			gammaCorrect = !gammaCorrect;
+			if (gammaCorrect) glEnable(GL_FRAMEBUFFER_SRGB);
+			else              glDisable(GL_FRAMEBUFFER_SRGB);
+			std::cout << "Gamma correction: " << (gammaCorrect ? "on" : "off") << std::endl;
+		}
+		gammaKeyWasDown = gammaKeyDown;
+
 		camera.Inputs(window.get());
 		camera.UpdateMatrix(fovDegrees, nearPlane, farPlane);
 		glfwSetWindowTitle(window.get(), formatTitle(fps, ms, camera).c_str());
 
-		glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
+		glClearColor(pow(0.07f, gamma), pow(0.13f, gamma), pow(0.17f, gamma), 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// Uploaded per frame so the B toggle takes effect immediately. A uniform
