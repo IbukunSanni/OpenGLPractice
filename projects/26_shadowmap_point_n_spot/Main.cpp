@@ -32,19 +32,41 @@ constexpr float fovDegrees = 45.0f;
 constexpr float nearPlane  = 0.1f;
 constexpr float farPlane   = 100.0f;
 
-// The island is authored in units roughly 2000x this scene's, so it is
-// rescaled into its rest pose at load rather than at every draw.
-//
-// The scene is now the island alone against the skybox: no ground plane, and
-// no second model. The island casts onto itself, which is what keeps the
-// shadow pass meaningful with the floor gone -- its machines and balloon sit
-// above its own deck, so the deck is the receiver the plane used to be.
+// Authored ~2000x this scene's units, so it is rescaled into its rest pose at
+// load. With the floor gone the island is its own receiver: the machines and
+// balloon sit above its deck, which is what keeps the shadow pass meaningful.
 constexpr float islandScale = 0.0005f;
 
-// Direction the scene is lit from. computeDirectionalLightColor() reads this as
-// a DIRECTION, not a point, and the depth pass builds its view from the same
-// vector. Nothing is drawn at this coordinate -- see the marker cube note below.
-constexpr glm::vec3 lightPosition(0.5f, 0.5f, 0.5f);
+// A real world-space POSITION now, not just a direction: spot and point both
+// measure distance from it. Sits above the balloon (top y = 0.71) and off-axis.
+// The directional path still reads it through normalize(), so it is unchanged.
+constexpr glm::vec3 lightPosition(0.6f, 1.0f, 0.6f);
+
+// Uploaded straight into default.frag's lightMode uniform, so these numbers are
+// half of a contract -- change one side and change the other.
+enum class LightMode : int
+{
+	Directional = 0,
+	Spot        = 1,
+	Point       = 2
+};
+
+const char* lightModeName(LightMode mode)
+{
+	switch (mode)
+	{
+	case LightMode::Spot:  return "spot (perspective, one 2D map)";
+	case LightMode::Point: return "point (cubemap, six faces)";
+	default:               return "directional (orthographic, one 2D map)";
+	}
+}
+
+// Range the cubemap normalises distance against, and the far plane of its six
+// views. Furthest island corner is ~2.75 from the light, so 5.0 clears it.
+// The tutorial reuses the camera's 100 here; that wastes 95% of the range and
+// rescales what default.frag's world-space bias means, so retune both together.
+constexpr float shadowFarPlane  = 5.0f;
+constexpr float shadowNearPlane = 0.05f;
 
 const std::string assetDirectory =
 	"C:/Users/Ibukunoluwa/Documents/Coding/C-C++/OpenGL-VSstudio/OpenGLPractice/Assets";
@@ -133,38 +155,29 @@ private:
 // ===========================================================================
 
 
-// COMMENTED OUT for the point/spot work. The marker cube is a stand-in for a
-// light that HAS a position, and the light this project currently runs is
-// directional -- lightPosition is read as a direction, and the cube drawn at
-// that coordinate says nothing true about where the light is. It also lands in
-// the middle of the island's centre deck at islandScale.
-//
-// Restore it when the point and spot lights land: at that stage the light does
-// have a position, the cube marks it honestly, and watching it move is the
-// quickest check that the shading and the shadow pass agree about where it is.
-// Five other sites are commented out with it -- search for "marker cube".
-//
-// Light marker cube, vertices and indices verbatim from 11_light. It renders
-// unlit through light.frag, so normal, colour and UV are never read -- only
-// position matters, and the struct's other fields are filled to satisfy it.
-//Mesh createLightCubeMesh()
-//{
-//	const glm::vec3 zero(0.0f);
-//	const float s = 0.1f;
-//	std::vector<Vertex> vertices;
-//	const glm::vec3 corners[8] = {
-//		{ -s, -s,  s }, { -s, -s, -s }, {  s, -s, -s }, {  s, -s,  s },
-//		{ -s,  s,  s }, { -s,  s, -s }, {  s,  s, -s }, {  s,  s,  s } };
-//	for (const glm::vec3& c : corners)
-//		vertices.push_back({ c, zero, zero, glm::vec2(0.0f, 0.0f) });
-//
-//	std::vector<GLuint> indices = {
-//		0, 1, 2,  0, 2, 3,   0, 4, 7,  0, 7, 3,
-//		3, 7, 6,  3, 6, 2,   2, 6, 5,  2, 5, 1,
-//		1, 5, 4,  1, 4, 0,   4, 5, 6,  4, 6, 7 };
-//	std::vector<Texture> none;
-//	return Mesh(vertices, indices, none);
-//}
+// COMMENTED OUT -- the tutorial has no light marker either. Five sites go with
+// it; search "marker cube". Verbatim from 11_light: drawn unlit, so only
+// position is read and the other Vertex fields just satisfy the struct.
+/*
+Mesh createLightCubeMesh()
+{
+	const glm::vec3 zero(0.0f);
+	const float s = 0.1f;
+	std::vector<Vertex> vertices;
+	const glm::vec3 corners[8] = {
+		{ -s, -s,  s }, { -s, -s, -s }, {  s, -s, -s }, {  s, -s,  s },
+		{ -s,  s,  s }, { -s,  s, -s }, {  s,  s, -s }, {  s,  s,  s } };
+	for (const glm::vec3& c : corners)
+		vertices.push_back({ c, zero, zero, glm::vec2(0.0f, 0.0f) });
+
+	std::vector<GLuint> indices = {
+		0, 1, 2,  0, 2, 3,   0, 4, 7,  0, 7, 3,
+		3, 7, 6,  3, 6, 2,   2, 6, 5,  2, 5, 1,
+		1, 5, 4,  1, 4, 0,   4, 5, 6,  4, 6, 7 };
+	std::vector<Texture> none;
+	return Mesh(vertices, indices, none);
+}
+*/
 
 // Stop before model parsing when a required asset is missing.
 void requireFile(const std::string& path, const char* assetName)
@@ -346,12 +359,9 @@ std::string formatTitle(const std::string& fps, const std::string& ms, const Cam
 	return stream.str();
 }
 
-// Drawn after the model so early-z can discard every fragment the model already
-// covers: the cube writes depth 1.0, which loses to any real geometry.
-// Overlays the shadow map in the bottom-left corner. Purely diagnostic: it
-// answers "did the depth pass actually rasterise anything, and how much of the
-// map does it fill", which is the question that makes every later shadow bug
-// tractable.
+// Overlays the shadow map bottom-left. Purely diagnostic: it answers whether the
+// depth pass rasterised anything and how much of the map it fills, which is what
+// makes every later shadow bug tractable.
 void drawShadowMapOverlay(Shader& shader, const QuadMesh& mesh,
 	unsigned int depthTexture, bool gammaCorrect)
 {
@@ -437,19 +447,18 @@ void run()
 	WindowPtr window = createWindow(appName);
 
 	// --- shaders ------------------------------------------------------------
-	// One lit shader for the model, one unlit shader that samples the cubemap
-	// for the sky behind it.
-	//
-	// No geometry stage: default.geom was a pass-through, and once default.vert
-	// started emitting fragPosLight for the shadow lookup it became one more
-	// interface to keep in sync for no gain. Omitting the third argument passes
-	// nullptr, so default.vert feeds default.frag directly.
+	// No geometry stage on the lit program: default.geom was a pass-through, and
+	// one more interface to keep in sync once fragPosLight arrived. Omitting the
+	// third argument passes nullptr, so default.vert feeds default.frag directly.
 	Shader shaderProgram("default.vert", "default.frag");
 	Shader skyboxShader("skybox.vert", "skybox.frag");
 	Shader framebufferProgram("framebuffer.vert", "framebuffer.frag");
 	// marker cube: unlit, emits lightColor flat with no shading applied to itself.
 	//Shader lightShader("light.vert", "light.frag");
 	Shader shadowMapProgram("shadowMap.vert", "shadowMap.frag");
+	// The third argument is a GEOMETRY shader -- the only one in the project. It
+	// is the stage that can emit a triangle per face and route each copy.
+	Shader shadowCubeMapProgram("shadowCubeMap.vert", "shadowCubeMap.frag", "shadowCubeMap.geom");
 	// Reuses framebuffer.vert -- it already emits an NDC quad with UVs.
 	Shader shadowDebugProgram("framebuffer.vert", "shadowDebug.frag");
 
@@ -459,11 +468,12 @@ void run()
 	// marker cube
 	//ShaderGuard lightGuard(lightShader);
 	ShaderGuard shadowGuard(shadowMapProgram);
+	ShaderGuard shadowCubeGuard(shadowCubeMapProgram);
 	ShaderGuard shadowDebugGuard(shadowDebugProgram);
 
 
 	// Still live: default.frag multiplies every lit fragment by this. Only the
-	// marker cube's copy of it is commented out below.
+	// marker cube's own copy of it is commented out below.
 	const glm::vec4 lightColor(1.0f, 1.0f, 1.0f, 1.0f);
 	const glm::vec3 lightPos = lightPosition;
 
@@ -508,12 +518,9 @@ void run()
 
 	requireFile(islandPath, "island");
 
-	// "Object_19" is the scene's own sky: a 559-vertex sphere ~36000 model units
-	// across, wrapped in an emissive photo of a sky (material "sphere"). Nothing
-	// culls back faces in this project, so loading it would draw the inside of
-	// that shell over the whole frame and the skybox behind it would never be
-	// seen. Skipped at load rather than hidden at draw time, so it costs no
-	// texture units and no depth-pass geometry either.
+	// "Object_19" is the model's own sky: a sphere ~36000 units across. Nothing
+	// culls back faces here, so loading it draws that shell over the whole frame
+	// and hides our skybox. Skipped at load, so it costs no units or geometry.
 	Model islandModel(islandPath.c_str(), 1, {}, { "Object_19" });
 
 	// The island is authored around +/-2900 units wide; at 0.0005 it spans about
@@ -557,60 +564,123 @@ void run()
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 
-	// Matrices needed for the light's perspective
-	// Sized to THIS scene, not the tutorial's. At islandScale the model's corners
-	// sit at most 1.68 units from the origin, so the whole scene fits inside this
-	// 4x4 box. The tutorial's 70-unit box would spread that across ~30 of the
-	// map's 2048 texels and give an unreadably blocky shadow; a tight box is the
-	// single biggest factor in shadow map quality.
-	//
-	// Near/far are tightened for the same reason, on the axis that governs
-	// precision rather than resolution. The light sits at 20 * lightPos, so
-	// measured along its view axis the origin is at 17.32 and the floor corners
-	// span 16.17 to 18.48. The old 0.1..25 range spent ~90 percent of the depth
-	// buffer on empty space; 15..20 spends it on the scene, which is a ~5x gain
-	// in depth precision and shrinks the quantisation error that causes acne.
-	// It also rescales what the bias constant MEANS: normalised depth now spans
-	// 5 world units instead of 24.9, so the same bias is a 5x smaller offset.
-	//
-	// The cost is that anything outside 15..20 along that axis is clipped OUT of
-	// the map and stops casting. Measured along the light axis the island spans
-	// 15.87 to 18.69, so it clears near by ~0.87 and far by ~1.3.
-	// Scale it up much past islandScale and its extremities fall out of the map
-	// and silently stop casting.
-	glm::mat4 orthgonalProjection = glm::ortho(-2.0f, 2.0f, -2.0f, 2.0f, 15.0f, 20.0f);
-	glm::mat4 lightView = glm::lookAt(20.0f * lightPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	glm::mat4 lightProjection = orthgonalProjection * lightView;
+	// --- Framebuffer for the point light's cubemap shadow map ---------------
+	// A separate depth target: the one above is a flat GL_TEXTURE_2D, and a point
+	// light needs somewhere to put six views.
+	unsigned int pointShadowMapFBO;
+	glGenFramebuffers(1, &pointShadowMapFBO);
 
-	shadowMapProgram.Activate();
-	glUniformMatrix4fv(glGetUniformLocation(shadowMapProgram.ID, "lightProjection"), 1, GL_FALSE, glm::value_ptr(lightProjection));
+	unsigned int depthCubemap;
+	glGenTextures(1, &depthCubemap);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
 
-	// The SAME matrix the depth pass rendered with, on the lit program too:
-	// default.vert builds fragPosLight from it, and the comparison is only
-	// meaningful if both passes agree on the light's frustum. A uniform belongs
-	// to a program, so setting it on shadowMapProgram does nothing for this one.
-	// Uploaded once -- the light does not move.
+	// Six faces, allocated separately but all one texture object -- which is what
+	// lets the geometry shader treat them as six layers of one attachment.
+	for (unsigned int i = 0; i < 6; ++i)
+	{
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT,
+			shadowMapWidth, shadowMapHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	}
+
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	// CLAMP_TO_EDGE, not the 2D map's white CLAMP_TO_BORDER: that border makes
+	// "outside the frustum" read as lit, and a cubemap has no outside. R is the
+	// third axis a samplerCube indexes with; a 2D map has no such parameter.
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, pointShadowMapFBO);
+	// glFramebufferTexture, NOT ...Texture2D: the 2D form attaches one image, this
+	// attaches the cubemap as a LAYERED one, which is what gl_Layer selects
+	// between. Use the 2D form and five of the six faces are never written.
+	glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthCubemap, 0);
+	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		throw std::runtime_error("Point-light shadow framebuffer is incomplete");
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
+	// --- the directional light's matrix ------------------------------------
+	// Box sized to the scene (corners reach 1.68): a loose box gives a blocky
+	// shadow, a tight near/far spends depth precision on geometry not empty space.
+	// Outside 16..20 is clipped and stops casting; the island spans 16.32..19.68.
+
+	// Eye = normalize(lightPos) * 18. 25 wrote 20.0f * lightPos, which only worked
+	// while |lightPos| was ~0.87; at 1.31 it lands at 26.2, behind the far plane.
+	constexpr float directionalDistance = 18.0f;
+	glm::mat4 orthgonalProjection = glm::ortho(-2.0f, 2.0f, -2.0f, 2.0f, 16.0f, 20.0f);
+	glm::mat4 directionalView = glm::lookAt(glm::normalize(lightPos) * directionalDistance,
+		glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 directionalProjection = orthgonalProjection * directionalView;
+
+	// --- the spotlight's matrix --------------------------------------------
+	// glm::perspective for glm::ortho is the whole of the spotlight half: FBO,
+	// depth pass, shader and lookup are reused untouched. A spot cone IS a
+	// perspective frustum -- rays from a point, which ortho cannot model.
+	glm::mat4 spotProjection =
+		glm::perspective(glm::radians(90.0f), 1.0f, shadowNearPlane, shadowFarPlane) *
+		glm::lookAt(lightPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+
+	// Axis of the cone, handed to default.frag so the lit cone and this frustum
+	// cannot drift apart. See the note at computeSpotLightColor().
+	const glm::vec3 spotDirection = glm::normalize(glm::vec3(0.0f) - lightPos);
+
+	// --- the point light's six matrices ------------------------------------
+	// One 90-degree view per axis; 90 is not a tuning choice, since six square
+	// frustums at exactly 90 tile the sphere with no gap or overlap. The up
+	// vectors are standard; +Y/-Y differ or lookAt would be degenerate.
+	glm::mat4 shadowProj =
+		glm::perspective(glm::radians(90.0f), 1.0f, shadowNearPlane, shadowFarPlane);
+
+	std::array<glm::mat4, 6> shadowTransforms =
+	{
+		shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3( 1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+		shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(-1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+		shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3( 0.0f,  1.0f,  0.0f), glm::vec3(0.0f,  0.0f,  1.0f)),
+		shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3( 0.0f, -1.0f,  0.0f), glm::vec3(0.0f,  0.0f, -1.0f)),
+		shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3( 0.0f,  0.0f,  1.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
+		shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3( 0.0f,  0.0f, -1.0f), glm::vec3(0.0f, -1.0f,  0.0f))
+	};
+
+	// Uploaded element by element: querying "shadowMatrices[i]" per element is the
+	// form that cannot go wrong across drivers.
+	shadowCubeMapProgram.Activate();
+	for (int i = 0; i < 6; i++)
+	{
+		const std::string name = "shadowMatrices[" + std::to_string(i) + "]";
+		glUniformMatrix4fv(glGetUniformLocation(shadowCubeMapProgram.ID, name.c_str()),
+			1, GL_FALSE, glm::value_ptr(shadowTransforms[i]));
+	}
+	// Must match what default.frag multiplies back out, or comparisons are scaled.
+	glUniform3f(glGetUniformLocation(shadowCubeMapProgram.ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
+	glUniform1f(glGetUniformLocation(shadowCubeMapProgram.ID, "shadowFarPlane"), shadowFarPlane);
+
+	// The lit program needs the same constants on its side of the comparison.
 	shaderProgram.Activate();
-	glUniformMatrix4fv(glGetUniformLocation(shaderProgram.ID, "lightProjection"), 1, GL_FALSE, glm::value_ptr(lightProjection));
+	glUniform1f(glGetUniformLocation(shaderProgram.ID, "shadowFarPlane"), shadowFarPlane);
+	glUniform3f(glGetUniformLocation(shaderProgram.ID, "spotDirection"), spotDirection.x, spotDirection.y, spotDirection.z);
 
-	// Texture unit 2 for the depth map. Units 0 and 1 are claimed by the
-	// diffuse0/specular0 pair Mesh::Draw rebinds on every draw, and an unset
-	// sampler defaults to unit 0 -- which would silently read a mesh's base colour
-	// map as depth rather than failing. The unit number never changes, so only
-	// the binding below has to be re-established per frame.
+	// Unit 2 for the 2D map, 3 for the cubemap. 0 and 1 are Mesh::Draw's
+	// diffuse0/specular0, and an unset sampler defaults to 0 -- which reads a
+	// colour map as depth rather than failing. The two cannot share a unit:
+	// sampling a 2D binding through a samplerCube is undefined, and both stay bound.
 	glUniform1i(glGetUniformLocation(shaderProgram.ID, "shadowMap"), 2);
+	glUniform1i(glGetUniformLocation(shaderProgram.ID, "shadowCubeMap"), 3);
 
 
 
 	// --- camera -------------------------------------------------------------
-	// Pulled back to fit the island. It is 2.9 units wide at islandScale, and a
-	// 45-degree vertical FOV covers only 0.414 units of half-height per unit of
-	// distance, so the three decks need ~4 units of standoff to sit inside the
-	// frame. Raised on Y as well, to look down onto the decks where the shadows
-	// the machines cast on them are visible.
-	const glm::vec3 initialCameraPosition(0.0f, 0.9f, 4.0f);
+	// The island is 2.9 units wide and a 45-degree FOV covers 0.414 of half-height
+	// per unit of distance, so the decks need ~4 units of standoff. Raised on Y to
+	// look down onto the decks, where the machines' cast shadows are visible.
+	const glm::vec3 initialCameraPosition(1.9f, 2.2f, 1.7f);
 	Camera camera(width, height, initialCameraPosition);
-	camera.LookAt(initialCameraPosition, glm::vec3(0.0f, 0.05f, 0.0f));
+	camera.LookAt(initialCameraPosition, glm::vec3(-0.5f, -0.5f, -0.65f));
 	camera.AttachToWindow(window.get());
 
 	// --- render loop --------------------------------------------------------
@@ -619,10 +689,9 @@ void run()
 	bool useBlinnPhong = true;
 	bool blinnKeyWasDown = false;
 
-	// T hides the island from the camera pass while it keeps casting, so the
-	// depth-map overlay and the skybox can be read with nothing in front of them.
-	// With the floor gone the island is its own receiver, so unlike in 25 this no
-	// longer leaves a lone shadow on screen -- it empties the scene instead.
+	// T hides the island from the camera pass while it keeps casting. With the
+	// floor gone it is its own receiver, so this now empties the scene rather
+	// than leaving a lone shadow the way it did in 25.
 	bool showIsland = true;
 	bool showIslandKeyWasDown = false;
 
@@ -633,6 +702,13 @@ void run()
 	// G toggles the output encoding so the difference is visible side by side.
 	bool gammaCorrect = true;
 	bool gammaKeyWasDown = false;
+
+	// L cycles directional -> spot -> point. The tutorial swaps these by
+	// commenting calls in and out, which needs a rebuild each time. All three are
+	// built up front here, so the switch costs only the branch below.
+	LightMode lightMode = LightMode::Directional;
+	bool lightModeKeyWasDown = false;
+	std::cout << "Light: " << lightModeName(lightMode) << " (L to cycle)" << std::endl;
 
 	double prevTime = 0.0;
 	unsigned int frameCounter = 0;
@@ -657,17 +733,44 @@ void run()
 		// Depth testing needed for Shadow Map
 		glEnable(GL_DEPTH_TEST);
 
-		// Preparations for the Shadow Map
+		// Both branches render at the MAP's resolution, not the window's: the
+		// viewport must match the attachment or the pass covers a fraction of it.
 		glViewport(0, 0, shadowMapWidth, shadowMapHeight);
-		glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
-		glClear(GL_DEPTH_BUFFER_BIT);
 
-		// Draw scene for shadow map.
-		// Deliberately NOT guarded by T: that key is about what the CAMERA sees.
-		// Guarding this too would empty the map, and an empty map reads as "nothing
-		// occludes anything" rather than as an error, which is the hardest kind of
-		// shadow bug to notice.
-		islandModel.Draw(shadowMapProgram, camera);
+		// Neither branch is guarded by T -- that key is about what the camera sees.
+		// An empty map reads as "nothing occludes anything" rather than as an error.
+		if (lightMode == LightMode::Point)
+		{
+			// ONE draw call fills all six faces: the geometry shader re-emits each
+			// triangle per face. One geometry pass instead of six, paid for with a
+			// 6x fragment load.
+			glBindFramebuffer(GL_FRAMEBUFFER, pointShadowMapFBO);
+			glClear(GL_DEPTH_BUFFER_BIT);
+			islandModel.Draw(shadowCubeMapProgram, camera);
+		}
+		else
+		{
+			// Directional and spot share this whole branch; the only difference is
+			// which matrix was uploaded, which is the point.
+			const glm::mat4& lightProjection = (lightMode == LightMode::Spot)
+				? spotProjection
+				: directionalProjection;
+
+			shadowMapProgram.Activate();
+			glUniformMatrix4fv(glGetUniformLocation(shadowMapProgram.ID, "lightProjection"),
+				1, GL_FALSE, glm::value_ptr(lightProjection));
+
+			// The SAME matrix on the lit program: default.vert builds fragPosLight
+			// from it, and the comparison only means anything if both passes agree.
+			// Uniforms belong to a program, so the line above does not cover this.
+			shaderProgram.Activate();
+			glUniformMatrix4fv(glGetUniformLocation(shaderProgram.ID, "lightProjection"),
+				1, GL_FALSE, glm::value_ptr(lightProjection));
+
+			glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
+			glClear(GL_DEPTH_BUFFER_BIT);
+			islandModel.Draw(shadowMapProgram, camera);
+		}
 
 		// Both are sticky global state: without restoring them the rest of the
 		// frame keeps rendering into this depth-only FBO at 2048x2048, and every
@@ -708,6 +811,14 @@ void run()
 		}
 		showIslandKeyWasDown = showIslandKeyDown;
 
+		const bool lightModeKeyDown = glfwGetKey(window.get(), GLFW_KEY_L) == GLFW_PRESS;
+		if (lightModeKeyDown && !lightModeKeyWasDown)
+		{
+			lightMode = static_cast<LightMode>((static_cast<int>(lightMode) + 1) % 3);
+			std::cout << "Light: " << lightModeName(lightMode) << std::endl;
+		}
+		lightModeKeyWasDown = lightModeKeyDown;
+
 		const bool shadowMapKeyDown = glfwGetKey(window.get(), GLFW_KEY_M) == GLFW_PRESS;
 		if (shadowMapKeyDown && !shadowMapKeyWasDown)
 		{
@@ -727,21 +838,22 @@ void run()
 		// belongs to a program, so each one must be Activated before it is set.
 		shaderProgram.Activate();
 		glUniform1i(glGetUniformLocation(shaderProgram.ID, "useBlinnPhong"), useBlinnPhong);
+		glUniform1i(glGetUniformLocation(shaderProgram.ID, "lightMode"), static_cast<int>(lightMode));
 
-		// Texture unit bindings are global state, not part of the program, so the
-		// depth map is re-bound to unit 2 each frame rather than once at startup.
+		// Unit bindings are global state, so both maps are re-bound each frame.
+		// Both, not just the active one: default.frag declares both samplers
+		// whatever lightMode does, and reading a unit with nothing of its type bound
+		// is undefined -- it works on one driver and renders black on another.
 		glActiveTexture(GL_TEXTURE0 + 2);
 		glBindTexture(GL_TEXTURE_2D, shadowMap);
+		glActiveTexture(GL_TEXTURE0 + 3);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubemap);
 
-		// The only lit draw left. It rides the existing pipeline, so default.frag
-		// and the Blinn-Phong toggle apply to it with no extra shader.
-		// Guarded by the T toggle; see above. This is the ONLY guarded draw -- the
-		// depth pass is not -- so T removes the island from view while it still
-		// writes the depth map.
+		// The only lit draw left, and the only one T guards -- the depth pass is
+		// not, so T hides the island while it keeps writing the depth map.
 		if (showIsland)
 			islandModel.Draw(shaderProgram, camera);
 
-		// marker cube
 		//lightCube.Draw(lightShader, camera,	glm::translate(glm::mat4(1.0f), lightPosition));
 
 		drawSkybox(skyboxShader, camera, skybox, cubemapTexture);

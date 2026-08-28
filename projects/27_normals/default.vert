@@ -9,36 +9,25 @@ layout (location = 2) in vec3 aColor;
 // Texture Coordinates
 layout (location = 3) in vec2 aTex;
 
-
 out vec3 fragPos;
 out vec3 fragNormal;
-out vec3 color;
 out vec2 texCoord;
-// Same position again, in the light's clip space, for the 2D shadow lookup.
-out vec4 fragPosLight;
 
-// Imports the camera matrix
 uniform mat4 camMatrix;
-// Imports the transformation matrices
 uniform mat4 model;
 uniform mat4 translation;
 uniform mat4 rotation;
 uniform mat4 scale;
-// Imports the light matrix
-uniform mat4 lightProjection;
-
 
 void main()
 {
 	fragPos = vec3(model * translation * rotation * scale * vec4(aPos, 1.0f));
 	fragNormal = aNormal;
-	color = aColor;
 	// Passed through UNCHANGED. This read mat2(0.0, -1.0, 1.0, 0.0) * aTex, a
 	// 90-degree UV rotation that belongs with flip=true (as in 13_model_loading).
 	// 25 brought it back without the flip, applying both corrections where neither
 	// was needed. flip=false plus identity is the coherent pair.
 	texCoord = aTex;
-	fragPosLight = lightProjection * vec4(fragPos, 1.0f);
 
 	gl_Position = camMatrix * vec4(fragPos, 1.0);
 }

@@ -8,11 +8,9 @@
 #include "Camera.h"
 #include "shaderClass.h"
 
-// A cubemap sky drawn as a unit cube around the camera.
-//
-// Owns its VAO/VBO/EBO and the cubemap texture and releases them in the
-// destructor -- these used to be loose handles in Main.cpp that were never
-// deleted at all.
+// A cubemap sky drawn as a unit cube around the camera. Owns its VAO/VBO/EBO
+// and cubemap texture and releases them in the destructor -- these used to be
+// loose handles in Main.cpp that were never deleted at all.
 class Skybox
 {
 public:

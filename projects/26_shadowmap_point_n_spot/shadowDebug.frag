@@ -15,10 +15,8 @@ void main()
     float depth = texture(depthMap, texCoords).r;
 
     // Texels no caster covered still hold the clear value of exactly 1.0.
-    // Tinting those instead of drawing them white is what makes the silhouette
-    // readable: an orthographic depth map of a small scene occupies a very
-    // narrow band of values, so a straight greyscale view is nearly uniform and
-    // tells you almost nothing.
+    // Tinting those makes the silhouette readable: a depth map of a small scene
+    // spans a narrow band, so plain greyscale is nearly uniform.
     if (depth >= 1.0)
     {
         FragColor = vec4(0.20, 0.05, 0.05, 1.0);
