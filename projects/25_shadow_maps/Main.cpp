@@ -569,9 +569,21 @@ void run()
 	// is scaled to 0.05, so the whole scene fits inside ~2 units. The tutorial's
 	// 70-unit box would spread that across ~30 of the map's 2048 texels and give
 	// an unreadably blocky shadow; a tight box is the single biggest factor in
-	// shadow map quality. Far only has to clear the light distance (~17) plus
-	// the scene radius.
-	glm::mat4 orthgonalProjection = glm::ortho(-2.0f, 2.0f, -2.0f, 2.0f, 0.1f, 25.0f);
+	// shadow map quality.
+	//
+	// Near/far are tightened for the same reason, on the axis that governs
+	// precision rather than resolution. The light sits at 20 * lightPos, so
+	// measured along its view axis the origin is at 17.32 and the floor corners
+	// span 16.17 to 18.48. The old 0.1..25 range spent ~90 percent of the depth
+	// buffer on empty space; 15..20 spends it on the scene, which is a ~5x gain
+	// in depth precision and shrinks the quantisation error that causes acne.
+	// It also rescales what the bias constant MEANS: normalised depth now spans
+	// 5 world units instead of 24.9, so the same bias is a 5x smaller offset.
+	//
+	// The cost is that anything outside 15..20 along that axis is clipped OUT of
+	// the map and stops casting. The floor leaves ~1.2 units of headroom at near
+	// and ~1.5 at far; the car has to fit inside that.
+	glm::mat4 orthgonalProjection = glm::ortho(-2.0f, 2.0f, -2.0f, 2.0f, 15.0f, 20.0f);
 	glm::mat4 lightView = glm::lookAt(20.0f * lightPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	glm::mat4 lightProjection = orthgonalProjection * lightView;
 

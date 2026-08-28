@@ -420,6 +420,21 @@ std::vector<Texture> Model::getTextures(const json& primitive) {
 		return Texture(px, N, N, type, slot, false);
 	};
 
+	// Texture units follow the material ROLE, not a running count. Mesh::Draw
+	// binds exactly one diffuse and one specular per mesh and names them
+	// diffuse0 / specular0, so two units is all a mesh can ever use.
+	//
+	// This was loadedTex.size() -- a counter running across every mesh in the
+	// model. With 25 meshes and 10 materials, nearly all of which generate a
+	// fallback specular, it climbed past 20: past the 16 fragment texture units
+	// GL 3.3 guarantees, and over whatever else the frame had already bound to
+	// those units. The shadow map on unit 2 was the visible casualty -- drawing
+	// the car overwrote it, so the floor sampled a 1x1 black fallback as depth
+	// and its shadow disappeared for exactly as long as the car was on screen.
+	auto slotForType = [](const char* type) -> GLuint {
+		return std::string(type) == "specular" ? 1u : 0u;
+	};
+
 	auto addTexture = [&](const std::string& path, const char* type) {
 		if (path.empty())
 			return;
@@ -430,12 +445,15 @@ std::vector<Texture> Model::getTextures(const json& primitive) {
 			{
 				Texture reusedTexture = loadedTex[i];
 				reusedTexture.type = type;
+				// The cache stores the GL object; the unit belongs to the role it is
+				// being reused AS, which may differ from the role it was loaded for.
+				reusedTexture.unit = slotForType(type);
 				textures.push_back(reusedTexture);
 				return;
 			}
 		}
 
-		Texture texture((fileDirectory + path).c_str(), type, static_cast<GLuint>(loadedTex.size()));
+		Texture texture((fileDirectory + path).c_str(), type, slotForType(type));
 		textures.push_back(texture);
 		loadedTex.push_back(texture);
 		loadedTexName.push_back(path);
@@ -516,13 +534,13 @@ std::vector<Texture> Model::getTextures(const json& primitive) {
 			std::cout << "[Model] WARNING: material declares diffuse texture \""
 				<< diffusePath << "\" but it could not be loaded; using the "
 				<< "missing-texture checker." << std::endl;
-			textures.push_back(checkerTexture("diffuse", static_cast<GLuint>(loadedTex.size())));
+			textures.push_back(checkerTexture("diffuse", slotForType("diffuse")));
 		}
 		else
 		{
 			// Untextured by design: solid-colour material, not a failure.
 			textures.push_back(solidColorTexture(baseColorFactor, "diffuse",
-				static_cast<GLuint>(loadedTex.size())));
+				slotForType("diffuse")));
 		}
 		loadedTex.push_back(textures.back());
 		loadedTexName.push_back(std::string());
@@ -536,7 +554,7 @@ std::vector<Texture> Model::getTextures(const json& primitive) {
 		// leaving specular0 unbound, which samples whatever happens to be there.
 		const json black = json::array({ 0.0f, 0.0f, 0.0f, 1.0f });
 		textures.push_back(solidColorTexture(black, "specular",
-			static_cast<GLuint>(loadedTex.size())));
+			slotForType("specular")));
 		loadedTex.push_back(textures.back());
 		loadedTexName.push_back(std::string());
 	}
