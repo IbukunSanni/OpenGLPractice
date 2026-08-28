@@ -9,7 +9,14 @@ using json = nlohmann::json;
 class Model {
 public:
 	// Loads a model from a file and stores the information in 'data', 'JSON', and 'file'
-	Model(const char* file, unsigned int instancing = 1, std::vector<glm::mat4> instanceMatrix = {});
+	// skipNodeNames names glTF nodes to leave out of the load, together with
+	// everything below them. Downloaded scenes often ship a giant textured
+	// sphere as a stand-in sky; loading it puts an opaque shell between the
+	// camera and this project's own skybox and hides it. The loader has no way
+	// to tell that mesh from any other, so the caller -- which knows what it is
+	// rendering -- names it.
+	Model(const char* file, unsigned int instancing = 1, std::vector<glm::mat4> instanceMatrix = {},
+		std::vector<std::string> skipNodeNames = {});
 
 	// Draws every mesh in the model using its own precomputed node transform.
 	// The T/R/S args place the whole model in the world and default to identity,
@@ -53,6 +60,9 @@ private:
 	// already be set by the time traverseNode() runs.
 	unsigned int instancing = 1;
 	std::vector<glm::mat4> instanceMatrix;
+
+	// Node names traverseNode() refuses to descend into. See the constructor.
+	std::vector<std::string> skipNodeNames;
 
 	// Prevents textures from being loaded twice
 	std::vector<std::string> loadedTexName;

@@ -32,6 +32,7 @@ namespace {
 	constexpr const char* GLTF_KEY_SCALE                       = "scale";
 	constexpr const char* GLTF_KEY_MATRIX                      = "matrix";
 	constexpr const char* GLTF_KEY_CHILDREN                    = "children";
+	constexpr const char* GLTF_KEY_NAME                        = "name";
 	constexpr const char* GLTF_KEY_BUFFERS                     = "buffers";
 	constexpr const char* GLTF_KEY_URI                         = "uri";
 	constexpr const char* GLTF_KEY_BUFFER_VIEW                 = "bufferView";
@@ -80,7 +81,8 @@ namespace {
 }
 
 Model::Model(const char* file, unsigned int instancing,
-	std::vector<glm::mat4> instanceMatrix) {
+	std::vector<glm::mat4> instanceMatrix,
+	std::vector<std::string> skipNodeNames) {
 	// Parse the glTF JSON and load its referenced binary buffer up front,
 	// since every accessor lookup below reads out of these two members.
 	std::string text = get_file_contents(file);
@@ -93,6 +95,9 @@ Model::Model(const char* file, unsigned int instancing,
 	// afterwards and every mesh is silently built as one non-instanced copy.
 	Model::instancing = instancing;
 	Model::instanceMatrix = instanceMatrix;
+	// Same ordering requirement as the two above: traverseNode() reads this on
+	// the way down, so it has to be in place before the walk starts.
+	Model::skipNodeNames = skipNodeNames;
 	data = getData();
 
 	// Recursively load every mesh reachable from the active scene's root nodes.
@@ -185,6 +190,19 @@ void Model::loadMesh(unsigned int indMesh) {
 
 void Model::traverseNode(unsigned int nextNode, glm::mat4 matrix) {
 	const json& node = JSON[GLTF_KEY_NODES][nextNode];
+
+	// Dropped before the transform is even built: a skipped node takes its whole
+	// subtree with it, since a child's placement is only meaningful relative to a
+	// parent that is being drawn.
+	if (!skipNodeNames.empty())
+	{
+		const std::string nodeName = node.value(GLTF_KEY_NAME, std::string{});
+		for (const std::string& skipped : skipNodeNames)
+		{
+			if (!nodeName.empty() && nodeName == skipped)
+				return;
+		}
+	}
 
 	glm::vec3 translation(0.0f);
 

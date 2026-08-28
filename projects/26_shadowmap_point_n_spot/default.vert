@@ -41,7 +41,7 @@ void main()
 	// Assigns the colors from the Vertex Data to "color"
 	color = aColor;
 	// Assigns the texture coordinates from the Vertex Data to "texCoord"
-	texCoord = mat2(0.0, -1.0, 1.0, 0.0) * aTex;
+	texCoord = aTex;
 	// Calculates the position of the light fragment for the fragment shader
 	fragPosLight = lightProjection * vec4(crntPos, 1.0f);
 	

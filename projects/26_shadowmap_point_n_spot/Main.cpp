@@ -32,15 +32,18 @@ constexpr float fovDegrees = 45.0f;
 constexpr float nearPlane  = 0.1f;
 constexpr float farPlane   = 100.0f;
 
-// Both models are authored far larger than the ~29 units of view height at
-// the camera distance below, so each is rescaled into its rest pose at load.
+// The island is authored in units roughly 2000x this scene's, so it is
+// rescaled into its rest pose at load rather than at every draw.
+//
+// The scene is now the island alone against the skybox: no ground plane, and
+// no second model. The island casts onto itself, which is what keeps the
+// shadow pass meaningful with the floor gone -- its machines and balloon sit
+// above its own deck, so the deck is the receiver the plane used to be.
+constexpr float islandScale = 0.0005f;
 
-// A large flat plane is the case that makes the Blinn-Phong toggle visible: at
-// grazing angles Phong's reflection vector swings more than 90 degrees from the
-// viewer and the highlight cuts off, while Blinn's halfway vector does not.
-// Scene reproduced from 11_light: a 2x2 plane at the origin and a 0.2 marker
-// cube at the light. Geometry is used exactly as authored there; placement is
-// done with model matrices, same as that lesson.
+// Direction the scene is lit from. computeDirectionalLightColor() reads this as
+// a DIRECTION, not a point, and the depth pass builds its view from the same
+// vector. Nothing is drawn at this coordinate -- see the marker cube note below.
 constexpr glm::vec3 lightPosition(0.5f, 0.5f, 0.5f);
 
 const std::string assetDirectory =
@@ -130,51 +133,38 @@ private:
 // ===========================================================================
 
 
-// A quad in the XZ plane with normals pointing up.
+// COMMENTED OUT for the point/spot work. The marker cube is a stand-in for a
+// light that HAS a position, and the light this project currently runs is
+// directional -- lightPosition is read as a direction, and the cube drawn at
+// that coordinate says nothing true about where the light is. It also lands in
+// the middle of the island's centre deck at islandScale.
 //
-// Winding matters here: the project culls with GL_FRONT + GL_CW, which keeps
-// triangles that project counter-clockwise. A triangle whose geometric normal
-// faces the viewer projects counter-clockwise, so this order leaves the top
-// face visible from above. Reverse the indices and the floor vanishes.
-// Floor plane, taken verbatim from 11_light. That file lists its attributes as
-// position / colour / texcoord / normal; this project's Vertex struct orders
-// them position / normal / colour / texUV, so they are reordered, not changed.
-Mesh createFloorMesh(std::vector<Texture>& textures)
-{
-	const glm::vec3 up(0.0f, 1.0f, 0.0f);
-	const glm::vec3 black(0.0f, 0.0f, 0.0f);
-
-	std::vector<Vertex> vertices = {
-		{ glm::vec3(-1.0f, 0.0f,  1.0f), up, black, glm::vec2(0.0f, 0.0f) },
-		{ glm::vec3(-1.0f, 0.0f, -1.0f), up, black, glm::vec2(0.0f, 1.0f) },
-		{ glm::vec3( 1.0f, 0.0f, -1.0f), up, black, glm::vec2(1.0f, 1.0f) },
-		{ glm::vec3( 1.0f, 0.0f,  1.0f), up, black, glm::vec2(1.0f, 0.0f) },
-	};
-	std::vector<GLuint> indices = { 0, 1, 2, 0, 2, 3 };
-	return Mesh(vertices, indices, textures);
-}
-
+// Restore it when the point and spot lights land: at that stage the light does
+// have a position, the cube marks it honestly, and watching it move is the
+// quickest check that the shading and the shadow pass agree about where it is.
+// Five other sites are commented out with it -- search for "marker cube".
+//
 // Light marker cube, vertices and indices verbatim from 11_light. It renders
 // unlit through light.frag, so normal, colour and UV are never read -- only
 // position matters, and the struct's other fields are filled to satisfy it.
-Mesh createLightCubeMesh()
-{
-	const glm::vec3 zero(0.0f);
-	const float s = 0.1f;
-	std::vector<Vertex> vertices;
-	const glm::vec3 corners[8] = {
-		{ -s, -s,  s }, { -s, -s, -s }, {  s, -s, -s }, {  s, -s,  s },
-		{ -s,  s,  s }, { -s,  s, -s }, {  s,  s, -s }, {  s,  s,  s } };
-	for (const glm::vec3& c : corners)
-		vertices.push_back({ c, zero, zero, glm::vec2(0.0f, 0.0f) });
-
-	std::vector<GLuint> indices = {
-		0, 1, 2,  0, 2, 3,   0, 4, 7,  0, 7, 3,
-		3, 7, 6,  3, 6, 2,   2, 6, 5,  2, 5, 1,
-		1, 5, 4,  1, 4, 0,   4, 5, 6,  4, 6, 7 };
-	std::vector<Texture> none;
-	return Mesh(vertices, indices, none);
-}
+//Mesh createLightCubeMesh()
+//{
+//	const glm::vec3 zero(0.0f);
+//	const float s = 0.1f;
+//	std::vector<Vertex> vertices;
+//	const glm::vec3 corners[8] = {
+//		{ -s, -s,  s }, { -s, -s, -s }, {  s, -s, -s }, {  s, -s,  s },
+//		{ -s,  s,  s }, { -s,  s, -s }, {  s,  s, -s }, {  s,  s,  s } };
+//	for (const glm::vec3& c : corners)
+//		vertices.push_back({ c, zero, zero, glm::vec2(0.0f, 0.0f) });
+//
+//	std::vector<GLuint> indices = {
+//		0, 1, 2,  0, 2, 3,   0, 4, 7,  0, 7, 3,
+//		3, 7, 6,  3, 6, 2,   2, 6, 5,  2, 5, 1,
+//		1, 5, 4,  1, 4, 0,   4, 5, 6,  4, 6, 7 };
+//	std::vector<Texture> none;
+//	return Mesh(vertices, indices, none);
+//}
 
 // Stop before model parsing when a required asset is missing.
 void requireFile(const std::string& path, const char* assetName)
@@ -457,8 +447,8 @@ void run()
 	Shader shaderProgram("default.vert", "default.frag");
 	Shader skyboxShader("skybox.vert", "skybox.frag");
 	Shader framebufferProgram("framebuffer.vert", "framebuffer.frag");
-	// Unlit: emits lightColor flat, with no shading applied to itself.
-	Shader lightShader("light.vert", "light.frag");
+	// marker cube: unlit, emits lightColor flat with no shading applied to itself.
+	//Shader lightShader("light.vert", "light.frag");
 	Shader shadowMapProgram("shadowMap.vert", "shadowMap.frag");
 	// Reuses framebuffer.vert -- it already emits an NDC quad with UVs.
 	Shader shadowDebugProgram("framebuffer.vert", "shadowDebug.frag");
@@ -466,13 +456,15 @@ void run()
 	ShaderGuard shaderGuard(shaderProgram);
 	ShaderGuard skyboxGuard(skyboxShader);
 	ShaderGuard framebufferGuard(framebufferProgram);
-	ShaderGuard lightGuard(lightShader);
+	// marker cube
+	//ShaderGuard lightGuard(lightShader);
 	ShaderGuard shadowGuard(shadowMapProgram);
 	ShaderGuard shadowDebugGuard(shadowDebugProgram);
 
 
+	// Still live: default.frag multiplies every lit fragment by this. Only the
+	// marker cube's copy of it is commented out below.
 	const glm::vec4 lightColor(1.0f, 1.0f, 1.0f, 1.0f);
-	// The light lives inside the cube, so the cube reads as its source.
 	const glm::vec3 lightPos = lightPosition;
 
 	shaderProgram.Activate();
@@ -482,8 +474,9 @@ void run()
 	skyboxShader.Activate();
 	glUniform1i(glGetUniformLocation(skyboxShader.ID, "skybox"), 0);
 
-	lightShader.Activate();
-	glUniform4f(glGetUniformLocation(lightShader.ID, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
+	// marker cube
+	//lightShader.Activate();
+	//glUniform4f(glGetUniformLocation(lightShader.ID, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
 
 	framebufferProgram.Activate();
 	glUniform1i(glGetUniformLocation(framebufferProgram.ID, "screenTexture"), 0);
@@ -503,36 +496,36 @@ void run()
 	// paths by string-slicing this one.
 	const std::array<std::string, 6> facesCubemap =
 	{
-		assetDirectory + "/Skybox/space/right.png",
-		assetDirectory + "/Skybox/space/left.png",
-		assetDirectory + "/Skybox/space/top.png",
-		assetDirectory + "/Skybox/space/bottom.png",
-		assetDirectory + "/Skybox/space/front.png",
-		assetDirectory + "/Skybox/space/back.png"
+		assetDirectory + "/Skybox/sky_42/right.png",
+		assetDirectory + "/Skybox/sky_42/left.png",
+		assetDirectory + "/Skybox/sky_42/top.png",
+		assetDirectory + "/Skybox/sky_42/bottom.png",
+		assetDirectory + "/Skybox/sky_42/front.png",
+		assetDirectory + "/Skybox/sky_42/back.png"
 	};
 
-	const std::string mach6Path = assetDirectory + "/Models/mach_6/scene.gltf";
-	const std::string planksPath = assetDirectory + "/Textures/planks.png";
-	const std::string planksSpecPath = assetDirectory + "/Textures/planksSpec.png";
-	
-	requireFile(mach6Path, "mach_6");
-	requireFile(planksPath, "planks");
-	requireFile(planksSpecPath, "planks specular");
+	const std::string islandPath = assetDirectory + "/Models/island/scene.gltf";
 
-	// Shared by floor and cube. Mesh::Draw numbers them into the diffuse0 /
-	// specular0 samplers default.frag expects.
-	std::vector<Texture> planksTextures = {
-		Texture(planksPath.c_str(), "diffuse", 0),
-		Texture(planksSpecPath.c_str(), "specular", 1)
-	};
-	Model mach6Model(mach6Path.c_str());
+	requireFile(islandPath, "island");
 
+	// "Object_19" is the scene's own sky: a 559-vertex sphere ~36000 model units
+	// across, wrapped in an emissive photo of a sky (material "sphere"). Nothing
+	// culls back faces in this project, so loading it would draw the inside of
+	// that shell over the whole frame and the skybox behind it would never be
+	// seen. Skipped at load rather than hidden at draw time, so it costs no
+	// texture units and no depth-pass geometry either.
+	Model islandModel(islandPath.c_str(), 1, {}, { "Object_19" });
+
+	// The island is authored around +/-2900 units wide; at 0.0005 it spans about
+	// 2.9 x 1.2 x 0.75 world units, which is deliberately close to the footprint
+	// the old 2x2 floor had. That is what lets the light frustum below keep the
+	// numbers it was tuned to.
 	glm::mat4 restPose = glm::mat4(1.0f);
-	restPose = glm::scale(restPose, glm::vec3(0.05f));
-	mach6Model.ApplyTransform(restPose);
+	restPose = glm::scale(restPose, glm::vec3(islandScale));
+	islandModel.ApplyTransform(restPose);
 
-	Mesh floorMesh = createFloorMesh(planksTextures);
-	Mesh lightCube = createLightCubeMesh();	
+	// marker cube
+	//Mesh lightCube = createLightCubeMesh();
 
 	const SkyboxMesh skybox = createSkyboxMesh();
 	const QuadMesh debugQuad = createQuadMesh();
@@ -565,11 +558,11 @@ void run()
 
 
 	// Matrices needed for the light's perspective
-	// Sized to THIS scene, not the tutorial's. The floor spans +/-1 and the car
-	// is scaled to 0.05, so the whole scene fits inside ~2 units. The tutorial's
-	// 70-unit box would spread that across ~30 of the map's 2048 texels and give
-	// an unreadably blocky shadow; a tight box is the single biggest factor in
-	// shadow map quality.
+	// Sized to THIS scene, not the tutorial's. At islandScale the model's corners
+	// sit at most 1.68 units from the origin, so the whole scene fits inside this
+	// 4x4 box. The tutorial's 70-unit box would spread that across ~30 of the
+	// map's 2048 texels and give an unreadably blocky shadow; a tight box is the
+	// single biggest factor in shadow map quality.
 	//
 	// Near/far are tightened for the same reason, on the axis that governs
 	// precision rather than resolution. The light sits at 20 * lightPos, so
@@ -581,8 +574,10 @@ void run()
 	// 5 world units instead of 24.9, so the same bias is a 5x smaller offset.
 	//
 	// The cost is that anything outside 15..20 along that axis is clipped OUT of
-	// the map and stops casting. The floor leaves ~1.2 units of headroom at near
-	// and ~1.5 at far; the car has to fit inside that.
+	// the map and stops casting. Measured along the light axis the island spans
+	// 15.87 to 18.69, so it clears near by ~0.87 and far by ~1.3.
+	// Scale it up much past islandScale and its extremities fall out of the map
+	// and silently stop casting.
 	glm::mat4 orthgonalProjection = glm::ortho(-2.0f, 2.0f, -2.0f, 2.0f, 15.0f, 20.0f);
 	glm::mat4 lightView = glm::lookAt(20.0f * lightPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	glm::mat4 lightProjection = orthgonalProjection * lightView;
@@ -600,7 +595,7 @@ void run()
 
 	// Texture unit 2 for the depth map. Units 0 and 1 are claimed by the
 	// diffuse0/specular0 pair Mesh::Draw rebinds on every draw, and an unset
-	// sampler defaults to unit 0 -- which would silently read the planks colour
+	// sampler defaults to unit 0 -- which would silently read a mesh's base colour
 	// map as depth rather than failing. The unit number never changes, so only
 	// the binding below has to be re-established per frame.
 	glUniform1i(glGetUniformLocation(shaderProgram.ID, "shadowMap"), 2);
@@ -608,11 +603,14 @@ void run()
 
 
 	// --- camera -------------------------------------------------------------
-	// Framed on the model's world-space bounds center, which already reflects
-	// the scale baked in above.
-	const glm::vec3 initialCameraPosition(0.0f, 0.0f, 2.0f);
+	// Pulled back to fit the island. It is 2.9 units wide at islandScale, and a
+	// 45-degree vertical FOV covers only 0.414 units of half-height per unit of
+	// distance, so the three decks need ~4 units of standoff to sit inside the
+	// frame. Raised on Y as well, to look down onto the decks where the shadows
+	// the machines cast on them are visible.
+	const glm::vec3 initialCameraPosition(0.0f, 0.9f, 4.0f);
 	Camera camera(width, height, initialCameraPosition);
-	camera.LookAt(initialCameraPosition, glm::vec3(0.0f, 0.0f, 0.0f));
+	camera.LookAt(initialCameraPosition, glm::vec3(0.0f, 0.05f, 0.0f));
 	camera.AttachToWindow(window.get());
 
 	// --- render loop --------------------------------------------------------
@@ -621,11 +619,12 @@ void run()
 	bool useBlinnPhong = true;
 	bool blinnKeyWasDown = false;
 
-	// TEMP (shadow-map work): T hides the car so the floor and the light cube
-	// are unobstructed while the depth pass is being built. Remove this, the
-	// key block below and the `if (showCar)` guard once shadows are working.
-	bool showCar = true;
-	bool showCarKeyWasDown = false;
+	// T hides the island from the camera pass while it keeps casting, so the
+	// depth-map overlay and the skybox can be read with nothing in front of them.
+	// With the floor gone the island is its own receiver, so unlike in 25 this no
+	// longer leaves a lone shadow on screen -- it empties the scene instead.
+	bool showIsland = true;
+	bool showIslandKeyWasDown = false;
 
 	// M overlays the shadow map in the corner so the depth pass can be seen.
 	bool showShadowMap = false;
@@ -664,12 +663,11 @@ void run()
 		glClear(GL_DEPTH_BUFFER_BIT);
 
 		// Draw scene for shadow map.
-		// Deliberately NOT guarded by T. The car always casts; T hides it from the
-		// CAMERA pass only, which leaves its shadow alone on the floor with nothing
-		// above it -- the view that makes the shadow inspectable while the lookup is
-		// being tuned, since from the default camera the car occludes most of it.
-		// Guarding this too would empty the map and take the shadow with it.
-		mach6Model.Draw(shadowMapProgram, camera);
+		// Deliberately NOT guarded by T: that key is about what the CAMERA sees.
+		// Guarding this too would empty the map, and an empty map reads as "nothing
+		// occludes anything" rather than as an error, which is the hardest kind of
+		// shadow bug to notice.
+		islandModel.Draw(shadowMapProgram, camera);
 
 		// Both are sticky global state: without restoring them the rest of the
 		// frame keeps rendering into this depth-only FBO at 2048x2048, and every
@@ -701,14 +699,14 @@ void run()
 		}
 		gammaKeyWasDown = gammaKeyDown;
 
-		// TEMP (shadow-map work): see the showCar declaration above.
-		const bool showCarKeyDown = glfwGetKey(window.get(), GLFW_KEY_T) == GLFW_PRESS;
-		if (showCarKeyDown && !showCarKeyWasDown)
+		// See the showIsland declaration above.
+		const bool showIslandKeyDown = glfwGetKey(window.get(), GLFW_KEY_T) == GLFW_PRESS;
+		if (showIslandKeyDown && !showIslandKeyWasDown)
 		{
-			showCar = !showCar;
-			std::cout << "Car model: " << (showCar ? "shown" : "hidden") << std::endl;
+			showIsland = !showIsland;
+			std::cout << "Island model: " << (showIsland ? "shown" : "hidden") << std::endl;
 		}
-		showCarKeyWasDown = showCarKeyDown;
+		showIslandKeyWasDown = showIslandKeyDown;
 
 		const bool shadowMapKeyDown = glfwGetKey(window.get(), GLFW_KEY_M) == GLFW_PRESS;
 		if (shadowMapKeyDown && !shadowMapKeyWasDown)
@@ -735,19 +733,16 @@ void run()
 		glActiveTexture(GL_TEXTURE0 + 2);
 		glBindTexture(GL_TEXTURE_2D, shadowMap);
 
-		// Both ride the existing pipeline -- default.frag and the Blinn-Phong
-		// toggle apply with no extra shader.
-		// Culling off for the plane: it is a single quad with one winding, so the
-		// underside would otherwise vanish the moment the camera drops below it.
-		// TEMP (shadow-map work): guarded by the T toggle; see above. This is the
-		// ONLY guarded draw -- the depth pass above is not -- so T removes the car
-		// from view while it keeps casting.
-		if (showCar)
-			mach6Model.Draw(shaderProgram, camera);
-	
-		floorMesh.Draw(shaderProgram, camera, glm::mat4(1.0f));
-	
-		lightCube.Draw(lightShader, camera,	glm::translate(glm::mat4(1.0f), lightPosition));
+		// The only lit draw left. It rides the existing pipeline, so default.frag
+		// and the Blinn-Phong toggle apply to it with no extra shader.
+		// Guarded by the T toggle; see above. This is the ONLY guarded draw -- the
+		// depth pass is not -- so T removes the island from view while it still
+		// writes the depth map.
+		if (showIsland)
+			islandModel.Draw(shaderProgram, camera);
+
+		// marker cube
+		//lightCube.Draw(lightShader, camera,	glm::translate(glm::mat4(1.0f), lightPosition));
 
 		drawSkybox(skyboxShader, camera, skybox, cubemapTexture);
 

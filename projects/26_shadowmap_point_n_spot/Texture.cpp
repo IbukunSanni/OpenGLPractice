@@ -62,8 +62,14 @@ Texture::Texture(const char* image, const char* texType, GLuint slot)
 
     int widthImg, heightImg, numColCh;
 
-    // Paired with the mat2 UV rotation in default.vert — these two must change
-    // together, since the models' UVs are authored for that combination.
+    // false is the correct setting for glTF, and it is now the ONLY thing
+    // deciding UV orientation -- default.vert no longer rotates on top of it.
+    //
+    // glTF puts UV (0,0) at the TOP-left of the image; GL puts texture
+    // coordinate (0,0) at the first row uploaded. stb hands over the top row
+    // first, so not flipping lines those two up exactly. Flipping here would
+    // need a compensating flip in the shader, which is how 13_model_loading
+    // ran (flip=true plus a mat2 rotation) -- see the note in default.vert.
     stbi_set_flip_vertically_on_load(false);
     unsigned char* bytes =
         load_texture_bytes(image, widthImg, heightImg, numColCh);
