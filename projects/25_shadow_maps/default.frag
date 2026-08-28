@@ -125,7 +125,14 @@ vec4 computePointLightColor()
 vec4 computeDirectionalLightColor()
 {
 	vec3 normal = normalize(Normal);
-	vec3 lightDirection = normalize(vec3(1.0f, 1.0f, 0.0f));
+	// Direction TO the light. A directional light has no position, so lightPos
+	// is read purely as a direction here -- and Main.cpp builds lightView from
+	// that same vector (lookAt from 20.0f * lightPos). One source, so the shading
+	// and the shadow map cannot disagree about where the light is. A second
+	// hardcoded vector here previously lit from (1,1,0) while the map was
+	// rendered from (1,1,1), which detaches shadows from the dark sides they
+	// are supposed to extend.
+	vec3 lightDirection = normalize(lightPos);
 	vec3 terms = computePhongTerms(normal, lightDirection, sceneAmbient, 0.50f, 16.0f);
 
 	
@@ -135,9 +142,8 @@ vec4 computeDirectionalLightColor()
 
 		lightCoords = (lightCoords + 1.0f) / 2.0f;
 		float currentDepth = lightCoords.z;
-		// TEMP: correct bias when explictly told to
-		// float bias = max(0.025f * (1.0f - dot(normal, lightDirection)), 0.0005f);
-		float bias = 0.0f;
+		float bias = max(0.025f * (1.0f - dot(normal, lightDirection)), 0.0005f);
+		
 
 		int sampleRadius = 2;
 		vec2 pixelSize = 1.0 / textureSize(shadowMap, 0);

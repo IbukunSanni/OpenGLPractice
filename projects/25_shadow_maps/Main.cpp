@@ -578,6 +578,21 @@ void run()
 	shadowMapProgram.Activate();
 	glUniformMatrix4fv(glGetUniformLocation(shadowMapProgram.ID, "lightProjection"), 1, GL_FALSE, glm::value_ptr(lightProjection));
 
+	// The SAME matrix the depth pass rendered with, on the lit program too:
+	// default.vert builds fragPosLight from it, and the comparison is only
+	// meaningful if both passes agree on the light's frustum. A uniform belongs
+	// to a program, so setting it on shadowMapProgram does nothing for this one.
+	// Uploaded once -- the light does not move.
+	shaderProgram.Activate();
+	glUniformMatrix4fv(glGetUniformLocation(shaderProgram.ID, "lightProjection"), 1, GL_FALSE, glm::value_ptr(lightProjection));
+
+	// Texture unit 2 for the depth map. Units 0 and 1 are claimed by the
+	// diffuse0/specular0 pair Mesh::Draw rebinds on every draw, and an unset
+	// sampler defaults to unit 0 -- which would silently read the planks colour
+	// map as depth rather than failing. The unit number never changes, so only
+	// the binding below has to be re-established per frame.
+	glUniform1i(glGetUniformLocation(shaderProgram.ID, "shadowMap"), 2);
+
 
 
 	// --- camera -------------------------------------------------------------
@@ -637,11 +652,12 @@ void run()
 		glClear(GL_DEPTH_BUFFER_BIT);
 
 		// Draw scene for shadow map.
-		// TEMP (shadow-map work): guarded by T alongside the camera pass below, so
-		// hiding the car drops it as a CASTER too. Without this guard T would leave
-		// a shadow with nothing casting it once default.frag samples the map.
-		if (showCar)
-			mach6Model.Draw(shadowMapProgram, camera);
+		// Deliberately NOT guarded by T. The car always casts; T hides it from the
+		// CAMERA pass only, which leaves its shadow alone on the floor with nothing
+		// above it -- the view that makes the shadow inspectable while the lookup is
+		// being tuned, since from the default camera the car occludes most of it.
+		// Guarding this too would empty the map and take the shadow with it.
+		mach6Model.Draw(shadowMapProgram, camera);
 
 		// Both are sticky global state: without restoring them the rest of the
 		// frame keeps rendering into this depth-only FBO at 2048x2048, and every
@@ -702,13 +718,18 @@ void run()
 		shaderProgram.Activate();
 		glUniform1i(glGetUniformLocation(shaderProgram.ID, "useBlinnPhong"), useBlinnPhong);
 
+		// Texture unit bindings are global state, not part of the program, so the
+		// depth map is re-bound to unit 2 each frame rather than once at startup.
+		glActiveTexture(GL_TEXTURE0 + 2);
+		glBindTexture(GL_TEXTURE_2D, shadowMap);
+
 		// Both ride the existing pipeline -- default.frag and the Blinn-Phong
 		// toggle apply with no extra shader.
 		// Culling off for the plane: it is a single quad with one winding, so the
 		// underside would otherwise vanish the moment the camera drops below it.
-		// TEMP (shadow-map work): guarded by the T toggle; see above. The depth
-		// pass is guarded by the same flag, so T takes the car out of both passes
-		// and it stops being a caster as well as a visible object.
+		// TEMP (shadow-map work): guarded by the T toggle; see above. This is the
+		// ONLY guarded draw -- the depth pass above is not -- so T removes the car
+		// from view while it keeps casting.
 		if (showCar)
 			mach6Model.Draw(shaderProgram, camera);
 	
