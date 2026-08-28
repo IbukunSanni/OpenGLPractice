@@ -4,7 +4,7 @@ VisualStudioVersion = 17.14.37027.9
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "projects", "projects", "{E0000000-0000-0000-0000-000000000000}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "25_shadow_maps", "projects\25_shadow_maps\25_shadow_maps.vcxproj", "{63EFB5CE-B4A8-4340-9ECF-33E1A6618339}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "26_shadowmap_point_n_spot", "projects\26_shadowmap_point_n_spot\26_shadowmap_point_n_spot.vcxproj", "{DDA8CBEE-9D84-42BB-AC84-2CB696985D3A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -12,10 +12,10 @@ Global
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{63EFB5CE-B4A8-4340-9ECF-33E1A6618339}.Debug|x64.ActiveCfg = Debug|x64
-		{63EFB5CE-B4A8-4340-9ECF-33E1A6618339}.Debug|x64.Build.0 = Debug|x64
-		{63EFB5CE-B4A8-4340-9ECF-33E1A6618339}.Release|x64.ActiveCfg = Release|x64
-		{63EFB5CE-B4A8-4340-9ECF-33E1A6618339}.Release|x64.Build.0 = Release|x64
+		{DDA8CBEE-9D84-42BB-AC84-2CB696985D3A}.Debug|x64.ActiveCfg = Debug|x64
+		{DDA8CBEE-9D84-42BB-AC84-2CB696985D3A}.Debug|x64.Build.0 = Debug|x64
+		{DDA8CBEE-9D84-42BB-AC84-2CB696985D3A}.Release|x64.ActiveCfg = Release|x64
+		{DDA8CBEE-9D84-42BB-AC84-2CB696985D3A}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
