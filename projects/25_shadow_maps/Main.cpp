@@ -241,6 +241,45 @@ SkyboxMesh createSkyboxMesh()
 	return mesh;
 }
 
+// --- shadow map debug overlay -------------------------------------------
+// A screen-space quad authored directly in NDC, drawn as an overlay so the
+// depth map can be inspected next to the scene it was rendered from.
+struct QuadMesh
+{
+	unsigned int vao = 0;
+	unsigned int vbo = 0;
+};
+
+QuadMesh createQuadMesh()
+{
+	// x, y, u, v -- two triangles covering NDC -1..1. framebuffer.vert reads
+	// position at location 0 and texture coordinates at location 1.
+	const float quadVertices[] =
+	{
+		-1.0f, -1.0f,  0.0f, 0.0f,
+		 1.0f, -1.0f,  1.0f, 0.0f,
+		 1.0f,  1.0f,  1.0f, 1.0f,
+
+		-1.0f, -1.0f,  0.0f, 0.0f,
+		 1.0f,  1.0f,  1.0f, 1.0f,
+		-1.0f,  1.0f,  0.0f, 1.0f
+	};
+
+	QuadMesh mesh;
+	glGenVertexArrays(1, &mesh.vao);
+	glGenBuffers(1, &mesh.vbo);
+	glBindVertexArray(mesh.vao);
+	glBindBuffer(GL_ARRAY_BUFFER, mesh.vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+	return mesh;
+}
+
 // A cubemap is ONE texture object holding six faces, not six textures.
 // GL_TEXTURE_CUBE_MAP_POSITIVE_X..NEGATIVE_Z are six consecutive enum values,
 // so POSITIVE_X + i walks them in the order `faces` is declared below:
@@ -319,6 +358,52 @@ std::string formatTitle(const std::string& fps, const std::string& ms, const Cam
 
 // Drawn after the model so early-z can discard every fragment the model already
 // covers: the cube writes depth 1.0, which loses to any real geometry.
+// Overlays the shadow map in the bottom-left corner. Purely diagnostic: it
+// answers "did the depth pass actually rasterise anything, and how much of the
+// map does it fill", which is the question that makes every later shadow bug
+// tractable.
+void drawShadowMapOverlay(Shader& shader, const QuadMesh& mesh,
+	unsigned int depthTexture, bool gammaCorrect)
+{
+	shader.Activate();
+
+	// Square, because the map is square -- letting it stretch to the window's
+	// aspect would misrepresent how the caster sits in the light's frustum.
+	const int overlaySize = static_cast<int>((width < height ? width : height) / 3);
+	glViewport(0, 0, overlaySize, overlaySize);
+
+	// The quad is drawn last and must survive whatever the scene left in the
+	// depth buffer, so the test comes off.
+	glDisable(GL_DEPTH_TEST);
+
+	// Culling is off by GL default and this program never enables it, but query
+	// rather than assume: restoring a state you did not actually save is how a
+	// debug overlay silently changes the scene it was added to inspect.
+	const GLboolean cullWasEnabled = glIsEnabled(GL_CULL_FACE);
+	glDisable(GL_CULL_FACE);
+
+	// Depth is linear data, not colour. Leaving the sRGB encode on would apply a
+	// display curve to raw depth values and make the readout lie about them.
+	glDisable(GL_FRAMEBUFFER_SRGB);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, depthTexture);
+	glUniform1i(glGetUniformLocation(shader.ID, "depthMap"), 0);
+
+	glBindVertexArray(mesh.vao);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glBindVertexArray(0);
+
+	// Restore everything this function changed, for the same reason the depth
+	// pass has to restore its framebuffer: GL state is global and sticky.
+	if (gammaCorrect)
+		glEnable(GL_FRAMEBUFFER_SRGB);
+	if (cullWasEnabled)
+		glEnable(GL_CULL_FACE);
+	glEnable(GL_DEPTH_TEST);
+	glViewport(0, 0, width, height);
+}
+
 void drawSkybox(Shader& shader, const Camera& camera, const SkyboxMesh& mesh, unsigned int cubemap)
 {
 	// ...but depth 1.0 must still pass where nothing was drawn, hence LEQUAL.
@@ -369,10 +454,17 @@ void run()
 	Shader framebufferProgram("framebuffer.vert", "framebuffer.frag");
 	// Unlit: emits lightColor flat, with no shading applied to itself.
 	Shader lightShader("light.vert", "light.frag");
+	Shader shadowMapProgram("shadowMap.vert", "shadowMap.frag");
+	// Reuses framebuffer.vert -- it already emits an NDC quad with UVs.
+	Shader shadowDebugProgram("framebuffer.vert", "shadowDebug.frag");
+
 	ShaderGuard shaderGuard(shaderProgram);
 	ShaderGuard skyboxGuard(skyboxShader);
 	ShaderGuard framebufferGuard(framebufferProgram);
 	ShaderGuard lightGuard(lightShader);
+	ShaderGuard shadowGuard(shadowMapProgram);
+	ShaderGuard shadowDebugGuard(shadowDebugProgram);
+
 
 	const glm::vec4 lightColor(1.0f, 1.0f, 1.0f, 1.0f);
 	// The light lives inside the cube, so the cube reads as its source.
@@ -438,7 +530,50 @@ void run()
 	Mesh lightCube = createLightCubeMesh();	
 
 	const SkyboxMesh skybox = createSkyboxMesh();
+	const QuadMesh debugQuad = createQuadMesh();
 	const unsigned int cubemapTexture = loadCubemap(facesCubemap);
+
+	// Framebuffer for Shadow Map
+	unsigned int shadowMapFBO;
+	glGenFramebuffers(1, &shadowMapFBO);
+	
+	// Texture for Shadow Map FBO
+	unsigned int shadowMapWidth = 2048, shadowMapHeight = 2048;
+	unsigned int shadowMap;
+	glGenTextures(1, &shadowMap);
+	glBindTexture(GL_TEXTURE_2D, shadowMap);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, shadowMapWidth, shadowMapHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	// Prevents darkness outside the frustrum
+	float clampColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, clampColor);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowMap, 0);
+	// Needed since we don't touch the color buffer
+	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
+	// Matrices needed for the light's perspective
+	// Sized to THIS scene, not the tutorial's. The floor spans +/-1 and the car
+	// is scaled to 0.05, so the whole scene fits inside ~2 units. The tutorial's
+	// 70-unit box would spread that across ~30 of the map's 2048 texels and give
+	// an unreadably blocky shadow; a tight box is the single biggest factor in
+	// shadow map quality. Far only has to clear the light distance (~17) plus
+	// the scene radius.
+	glm::mat4 orthgonalProjection = glm::ortho(-2.0f, 2.0f, -2.0f, 2.0f, 0.1f, 25.0f);
+	glm::mat4 lightView = glm::lookAt(20.0f * lightPos, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 lightProjection = orthgonalProjection * lightView;
+
+	shadowMapProgram.Activate();
+	glUniformMatrix4fv(glGetUniformLocation(shadowMapProgram.ID, "lightProjection"), 1, GL_FALSE, glm::value_ptr(lightProjection));
+
+
 
 	// --- camera -------------------------------------------------------------
 	// Framed on the model's world-space bounds center, which already reflects
@@ -453,6 +588,16 @@ void run()
 	// same frame. Both lit programs share default.frag, so both are told.
 	bool useBlinnPhong = true;
 	bool blinnKeyWasDown = false;
+
+	// TEMP (shadow-map work): T hides the car so the floor and the light cube
+	// are unobstructed while the depth pass is being built. Remove this, the
+	// key block below and the `if (showCar)` guard once shadows are working.
+	bool showCar = true;
+	bool showCarKeyWasDown = false;
+
+	// M overlays the shadow map in the corner so the depth pass can be seen.
+	bool showShadowMap = false;
+	bool shadowMapKeyWasDown = false;
 
 	// G toggles the output encoding so the difference is visible side by side.
 	bool gammaCorrect = true;
@@ -478,6 +623,27 @@ void run()
 			frameCounter = 0;
 		}
 
+		// Depth testing needed for Shadow Map
+		glEnable(GL_DEPTH_TEST);
+
+		// Preparations for the Shadow Map
+		glViewport(0, 0, shadowMapWidth, shadowMapHeight);
+		glBindFramebuffer(GL_FRAMEBUFFER, shadowMapFBO);
+		glClear(GL_DEPTH_BUFFER_BIT);
+
+		// Draw scene for shadow map.
+		// TEMP (shadow-map work): guarded by T alongside the camera pass below, so
+		// hiding the car drops it as a CASTER too. Without this guard T would leave
+		// a shadow with nothing casting it once default.frag samples the map.
+		if (showCar)
+			mach6Model.Draw(shadowMapProgram, camera);
+
+		// Both are sticky global state: without restoring them the rest of the
+		// frame keeps rendering into this depth-only FBO at 2048x2048, and every
+		// colour write is discarded because it has no colour attachment.
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glViewport(0, 0, width, height);
+
 		if (glfwGetKey(window.get(), GLFW_KEY_ESCAPE) == GLFW_PRESS)
 			glfwSetWindowShouldClose(window.get(), true);
 
@@ -502,6 +668,23 @@ void run()
 		}
 		gammaKeyWasDown = gammaKeyDown;
 
+		// TEMP (shadow-map work): see the showCar declaration above.
+		const bool showCarKeyDown = glfwGetKey(window.get(), GLFW_KEY_T) == GLFW_PRESS;
+		if (showCarKeyDown && !showCarKeyWasDown)
+		{
+			showCar = !showCar;
+			std::cout << "Car model: " << (showCar ? "shown" : "hidden") << std::endl;
+		}
+		showCarKeyWasDown = showCarKeyDown;
+
+		const bool shadowMapKeyDown = glfwGetKey(window.get(), GLFW_KEY_M) == GLFW_PRESS;
+		if (shadowMapKeyDown && !shadowMapKeyWasDown)
+		{
+			showShadowMap = !showShadowMap;
+			std::cout << "Shadow map overlay: " << (showShadowMap ? "on" : "off") << std::endl;
+		}
+		shadowMapKeyWasDown = shadowMapKeyDown;
+
 		camera.Inputs(window.get());
 		camera.UpdateMatrix(fovDegrees, nearPlane, farPlane);
 		glfwSetWindowTitle(window.get(), formatTitle(fps, ms, camera).c_str());
@@ -518,14 +701,20 @@ void run()
 		// Blinn-Phong toggle all apply with no extra shader.
 		// Culling off for the plane: it is a single quad with one winding, so the
 		// underside would otherwise vanish the moment the camera drops below it.
-		mach6Model.Draw(shaderProgram, camera);
+		// TEMP (shadow-map work): guarded by the T toggle; see above. The depth
+		// pass is guarded by the same flag, so T takes the car out of both passes
+		// and it stops being a caster as well as a visible object.
+		if (showCar)
+			mach6Model.Draw(shaderProgram, camera);
 	
 		floorMesh.Draw(shaderProgram, camera, glm::mat4(1.0f));
 	
-		lightCube.Draw(lightShader, camera,
-			glm::translate(glm::mat4(1.0f), lightPosition));
+		lightCube.Draw(lightShader, camera,	glm::translate(glm::mat4(1.0f), lightPosition));
 
 		drawSkybox(skyboxShader, camera, skybox, cubemapTexture);
+
+		if (showShadowMap)
+			drawShadowMapOverlay(shadowDebugProgram, debugQuad, shadowMap, gammaCorrect);
 
 		glfwSwapBuffers(window.get());
 		glfwPollEvents();

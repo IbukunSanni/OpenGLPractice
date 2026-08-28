@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
@@ -79,6 +79,9 @@
     <None Include="light.vert" />
     <None Include="light.frag" />
     <None Include="default.frag" />
+    <None Include="shadowDebug.frag" />
+    <None Include="shadowMap.frag" />
+    <None Include="shadowMap.vert" />
     <None Include="skybox.frag" />
     <None Include="skybox.vert" />
   </ItemGroup>

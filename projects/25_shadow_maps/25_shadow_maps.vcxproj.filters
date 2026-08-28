@@ -93,6 +93,8 @@
     <None Include="framebuffer.frag">
       <Filter>Resources\Shaders</Filter>
     </None>
+    <None Include="shadowMap.vert" />
+    <None Include="shadowMap.frag" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Resources">
