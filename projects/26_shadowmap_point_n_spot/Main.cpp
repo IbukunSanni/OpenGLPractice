@@ -42,8 +42,8 @@ constexpr float farPlane   = 100.0f;
 constexpr float islandScale = 0.0005f;
 
 // Direction the scene is lit from. computeDirectionalLightColor() reads this as
-// a DIRECTION, not a point, and the depth pass builds its view from the same
-// vector. Nothing is drawn at this coordinate -- see the marker cube note below.
+// a DIRECTION, and the depth pass builds its view from the same vector, so the
+// 0.1 marker cube drawn here is a readout of that direction and not a source.
 constexpr glm::vec3 lightPosition(0.5f, 0.5f, 0.5f);
 
 const std::string assetDirectory =
@@ -133,38 +133,27 @@ private:
 // ===========================================================================
 
 
-// COMMENTED OUT for the point/spot work. The marker cube is a stand-in for a
-// light that HAS a position, and the light this project currently runs is
-// directional -- lightPosition is read as a direction, and the cube drawn at
-// that coordinate says nothing true about where the light is. It also lands in
-// the middle of the island's centre deck at islandScale.
-//
-// Restore it when the point and spot lights land: at that stage the light does
-// have a position, the cube marks it honestly, and watching it move is the
-// quickest check that the shading and the shadow pass agree about where it is.
-// Five other sites are commented out with it -- search for "marker cube".
-//
 // Light marker cube, vertices and indices verbatim from 11_light. It renders
 // unlit through light.frag, so normal, colour and UV are never read -- only
 // position matters, and the struct's other fields are filled to satisfy it.
-//Mesh createLightCubeMesh()
-//{
-//	const glm::vec3 zero(0.0f);
-//	const float s = 0.1f;
-//	std::vector<Vertex> vertices;
-//	const glm::vec3 corners[8] = {
-//		{ -s, -s,  s }, { -s, -s, -s }, {  s, -s, -s }, {  s, -s,  s },
-//		{ -s,  s,  s }, { -s,  s, -s }, {  s,  s, -s }, {  s,  s,  s } };
-//	for (const glm::vec3& c : corners)
-//		vertices.push_back({ c, zero, zero, glm::vec2(0.0f, 0.0f) });
-//
-//	std::vector<GLuint> indices = {
-//		0, 1, 2,  0, 2, 3,   0, 4, 7,  0, 7, 3,
-//		3, 7, 6,  3, 6, 2,   2, 6, 5,  2, 5, 1,
-//		1, 5, 4,  1, 4, 0,   4, 5, 6,  4, 6, 7 };
-//	std::vector<Texture> none;
-//	return Mesh(vertices, indices, none);
-//}
+Mesh createLightCubeMesh()
+{
+	const glm::vec3 zero(0.0f);
+	const float s = 0.1f;
+	std::vector<Vertex> vertices;
+	const glm::vec3 corners[8] = {
+		{ -s, -s,  s }, { -s, -s, -s }, {  s, -s, -s }, {  s, -s,  s },
+		{ -s,  s,  s }, { -s,  s, -s }, {  s,  s, -s }, {  s,  s,  s } };
+	for (const glm::vec3& c : corners)
+		vertices.push_back({ c, zero, zero, glm::vec2(0.0f, 0.0f) });
+
+	std::vector<GLuint> indices = {
+		0, 1, 2,  0, 2, 3,   0, 4, 7,  0, 7, 3,
+		3, 7, 6,  3, 6, 2,   2, 6, 5,  2, 5, 1,
+		1, 5, 4,  1, 4, 0,   4, 5, 6,  4, 6, 7 };
+	std::vector<Texture> none;
+	return Mesh(vertices, indices, none);
+}
 
 // Stop before model parsing when a required asset is missing.
 void requireFile(const std::string& path, const char* assetName)
@@ -447,8 +436,8 @@ void run()
 	Shader shaderProgram("default.vert", "default.frag");
 	Shader skyboxShader("skybox.vert", "skybox.frag");
 	Shader framebufferProgram("framebuffer.vert", "framebuffer.frag");
-	// marker cube: unlit, emits lightColor flat with no shading applied to itself.
-	//Shader lightShader("light.vert", "light.frag");
+	// Unlit: emits lightColor flat, with no shading applied to itself.
+	Shader lightShader("light.vert", "light.frag");
 	Shader shadowMapProgram("shadowMap.vert", "shadowMap.frag");
 	// Reuses framebuffer.vert -- it already emits an NDC quad with UVs.
 	Shader shadowDebugProgram("framebuffer.vert", "shadowDebug.frag");
@@ -456,15 +445,13 @@ void run()
 	ShaderGuard shaderGuard(shaderProgram);
 	ShaderGuard skyboxGuard(skyboxShader);
 	ShaderGuard framebufferGuard(framebufferProgram);
-	// marker cube
-	//ShaderGuard lightGuard(lightShader);
+	ShaderGuard lightGuard(lightShader);
 	ShaderGuard shadowGuard(shadowMapProgram);
 	ShaderGuard shadowDebugGuard(shadowDebugProgram);
 
 
-	// Still live: default.frag multiplies every lit fragment by this. Only the
-	// marker cube's copy of it is commented out below.
 	const glm::vec4 lightColor(1.0f, 1.0f, 1.0f, 1.0f);
+	// The light lives inside the cube, so the cube reads as its source.
 	const glm::vec3 lightPos = lightPosition;
 
 	shaderProgram.Activate();
@@ -474,9 +461,8 @@ void run()
 	skyboxShader.Activate();
 	glUniform1i(glGetUniformLocation(skyboxShader.ID, "skybox"), 0);
 
-	// marker cube
-	//lightShader.Activate();
-	//glUniform4f(glGetUniformLocation(lightShader.ID, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
+	lightShader.Activate();
+	glUniform4f(glGetUniformLocation(lightShader.ID, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
 
 	framebufferProgram.Activate();
 	glUniform1i(glGetUniformLocation(framebufferProgram.ID, "screenTexture"), 0);
@@ -524,8 +510,7 @@ void run()
 	restPose = glm::scale(restPose, glm::vec3(islandScale));
 	islandModel.ApplyTransform(restPose);
 
-	// marker cube
-	//Mesh lightCube = createLightCubeMesh();
+	Mesh lightCube = createLightCubeMesh();	
 
 	const SkyboxMesh skybox = createSkyboxMesh();
 	const QuadMesh debugQuad = createQuadMesh();
@@ -608,9 +593,9 @@ void run()
 	// distance, so the three decks need ~4 units of standoff to sit inside the
 	// frame. Raised on Y as well, to look down onto the decks where the shadows
 	// the machines cast on them are visible.
-	const glm::vec3 initialCameraPosition(0.0f, 0.9f, 4.0f);
+	const glm::vec3 initialCameraPosition(1.9f, 2.2f, 1.7f);
 	Camera camera(width, height, initialCameraPosition);
-	camera.LookAt(initialCameraPosition, glm::vec3(0.0f, 0.05f, 0.0f));
+	camera.LookAt(initialCameraPosition, glm::vec3(-0.5f, -0.5f, -0.65f));
 	camera.AttachToWindow(window.get());
 
 	// --- render loop --------------------------------------------------------
@@ -741,7 +726,6 @@ void run()
 		if (showIsland)
 			islandModel.Draw(shaderProgram, camera);
 
-		// marker cube
 		//lightCube.Draw(lightShader, camera,	glm::translate(glm::mat4(1.0f), lightPosition));
 
 		drawSkybox(skyboxShader, camera, skybox, cubemapTexture);
