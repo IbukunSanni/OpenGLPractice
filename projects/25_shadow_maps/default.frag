@@ -5,9 +5,12 @@ out vec4 FragColor;
 in vec2 texCoord;
 in vec3 Normal;
 in vec3 crntPos;
+// Imports the fragment position of the light
+in vec4 fragPosLight;
 
 uniform sampler2D diffuse0;
 uniform sampler2D specular0;
+uniform sampler2D shadowMap;
 uniform vec4 lightColor;
 uniform vec3 lightPos;
 uniform vec3 camPos;
@@ -125,7 +128,35 @@ vec4 computeDirectionalLightColor()
 	vec3 lightDirection = normalize(vec3(1.0f, 1.0f, 0.0f));
 	vec3 terms = computePhongTerms(normal, lightDirection, sceneAmbient, 0.50f, 16.0f);
 
-	return composeLitColor(terms, 1.0f);
+	
+	float shadow = 0.0f;
+	vec3 lightCoords = fragPosLight.xyz / fragPosLight.w;
+	if(lightCoords.z <= 1.0f){
+
+		lightCoords = (lightCoords + 1.0f) / 2.0f;
+		float currentDepth = lightCoords.z;
+		// TEMP: correct bias when explictly told to
+		// float bias = max(0.025f * (1.0f - dot(normal, lightDirection)), 0.0005f);
+		float bias = 0.0f;
+
+		int sampleRadius = 2;
+		vec2 pixelSize = 1.0 / textureSize(shadowMap, 0);
+
+		for(int y = -sampleRadius; y <= sampleRadius; y++){
+			for(int x =-sampleRadius; x <= sampleRadius; x++ ){
+				float closestDepth = texture(shadowMap, lightCoords.xy + vec2(x,y) * pixelSize).r;
+				if (currentDepth > closestDepth + bias){
+					shadow += 1.0f;
+					}
+			}
+		}
+		// Get average shadow
+		shadow /= pow((sampleRadius * 2 + 1), 2);
+	}
+
+	float intensity = 1.0f - shadow ;
+
+	return composeLitColor(terms, intensity);
 }
 
 // Spotlight: cone-shaped light with a soft edge.
@@ -148,5 +179,5 @@ void main()
 	// Point light, so the cube's position actually governs the shading. The
 	// directional variant ignores lightPos entirely, which would leave the cube
 	// looking like a light source without behaving as one.
-	FragColor = computePointLightColor();
+	FragColor = computeDirectionalLightColor();
 }

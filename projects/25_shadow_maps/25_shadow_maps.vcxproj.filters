@@ -75,9 +75,6 @@
       <Filter>Resources\Shaders</Filter>
     </None>
     <None Include="CODE_WALKTHROUGH.md" />
-    <None Include="default.geom">
-      <Filter>Resources\Shaders</Filter>
-    </None>
     <None Include="asteroid.vert">
       <Filter>Resources\Shaders</Filter>
     </None>
@@ -95,6 +92,7 @@
     </None>
     <None Include="shadowMap.vert" />
     <None Include="shadowMap.frag" />
+    <None Include="shadowDebug.frag" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Resources">

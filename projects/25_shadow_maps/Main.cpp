@@ -449,7 +449,12 @@ void run()
 	// --- shaders ------------------------------------------------------------
 	// One lit shader for the model, one unlit shader that samples the cubemap
 	// for the sky behind it.
-	Shader shaderProgram("default.vert", "default.frag", "default.geom");
+	//
+	// No geometry stage: default.geom was a pass-through, and once default.vert
+	// started emitting fragPosLight for the shadow lookup it became one more
+	// interface to keep in sync for no gain. Omitting the third argument passes
+	// nullptr, so default.vert feeds default.frag directly.
+	Shader shaderProgram("default.vert", "default.frag");
 	Shader skyboxShader("skybox.vert", "skybox.frag");
 	Shader framebufferProgram("framebuffer.vert", "framebuffer.frag");
 	// Unlit: emits lightColor flat, with no shading applied to itself.
@@ -697,8 +702,8 @@ void run()
 		shaderProgram.Activate();
 		glUniform1i(glGetUniformLocation(shaderProgram.ID, "useBlinnPhong"), useBlinnPhong);
 
-		// Both ride the existing pipeline -- geometry shader, default.frag and the
-		// Blinn-Phong toggle all apply with no extra shader.
+		// Both ride the existing pipeline -- default.frag and the Blinn-Phong
+		// toggle apply with no extra shader.
 		// Culling off for the plane: it is a single quad with one winding, so the
 		// underside would otherwise vanish the moment the camera drops below it.
 		// TEMP (shadow-map work): guarded by the T toggle; see above. The depth
