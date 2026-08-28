@@ -18,7 +18,7 @@
 // Configuration
 // ===========================================================================
 
-constexpr const char* appName = "24_gamma";
+constexpr const char* appName = "25_shadow_maps";
 
 constexpr unsigned int width  = 800;
 constexpr unsigned int height = 800;
