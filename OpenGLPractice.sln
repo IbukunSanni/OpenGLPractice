@@ -4,7 +4,7 @@ VisualStudioVersion = 17.14.37027.9
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "projects", "projects", "{E0000000-0000-0000-0000-000000000000}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "27_normals", "projects\27_normals\27_normals.vcxproj", "{57B1E95D-3153-49D6-9E4F-9131A8ED850E}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "28_parallax", "projects\28_parallax\28_parallax.vcxproj", "{7AD61CFF-ECF7-404D-B45C-0E91F99C1BBF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -12,10 +12,10 @@ Global
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{57B1E95D-3153-49D6-9E4F-9131A8ED850E}.Debug|x64.ActiveCfg = Debug|x64
-		{57B1E95D-3153-49D6-9E4F-9131A8ED850E}.Debug|x64.Build.0 = Debug|x64
-		{57B1E95D-3153-49D6-9E4F-9131A8ED850E}.Release|x64.ActiveCfg = Release|x64
-		{57B1E95D-3153-49D6-9E4F-9131A8ED850E}.Release|x64.Build.0 = Release|x64
+		{7AD61CFF-ECF7-404D-B45C-0E91F99C1BBF}.Debug|x64.ActiveCfg = Debug|x64
+		{7AD61CFF-ECF7-404D-B45C-0E91F99C1BBF}.Debug|x64.Build.0 = Debug|x64
+		{7AD61CFF-ECF7-404D-B45C-0E91F99C1BBF}.Release|x64.ActiveCfg = Release|x64
+		{7AD61CFF-ECF7-404D-B45C-0E91F99C1BBF}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

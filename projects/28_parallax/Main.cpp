@@ -17,7 +17,7 @@
 // Configuration
 // ===========================================================================
 
-constexpr const char* appName = "27_normals";
+constexpr const char* appName = "28_parallax";
 
 constexpr unsigned int width  = 800;
 constexpr unsigned int height = 800;
@@ -205,6 +205,8 @@ void run()
 		assetDirectory + "/Textures/clay_roof/clay_roof_tiles_03_diff_1k.png";
 	const std::string clayRoofNormalPath =
 		assetDirectory + "/Textures/clay_roof/clay_roof_tiles_03_nor_gl_1k.png";
+	const std::string clayRoofDisplacementPath =
+		assetDirectory + "/Textures/clay_roof/clay_roof_tiles_03_disp_1k.png";
 
 	// Still the planks map, and deliberately not renamed: it is a stand-in until
 	// the clay roof's own roughness map goes in. default.frag samples specular0
@@ -214,6 +216,7 @@ void run()
 
 	requireFile(clayRoofDiffusePath, "clay roof diffuse texture");
 	requireFile(clayRoofNormalPath, "clay roof normal texture");
+	requireFile(clayRoofDisplacementPath, "clay roof displacement texture");
 
 	// Mesh::Draw numbers these into the diffuse0 / specular0 samplers
 	// default.frag expects.
@@ -224,6 +227,9 @@ void run()
 	Mesh planeMesh = createPlaneMesh(planeTextures);
 
 	Texture normalMap(clayRoofNormalPath.c_str(), "normal", 1);
+	// Unit 2. Single-channel and NOT sRGB -- Texture only decodes "diffuse", and a
+	// height map is a measurement, so decoding it would bend every step of the march.
+	Texture displacementMap(clayRoofDisplacementPath.c_str(), "displacement", 2);
 
 	// --- camera -------------------------------------------------------------
 	// Straight down -Z at the plane's face. The quad spans +/-1 and a 45-degree
@@ -248,6 +254,11 @@ void run()
 	// comparison that shows what the map is actually contributing.
 	bool useNormalMap = true;
 	bool normalMapKeyWasDown = false;
+
+	// P compares the marched UV against the raw one. With it off the surface goes
+	// back to being flat-with-lighting, which is what a normal map alone gives.
+	bool useParallax = true;
+	bool parallaxKeyWasDown = false;
 
 	double prevTime = 0.0;
 	unsigned int frameCounter = 0;
@@ -302,6 +313,15 @@ void run()
 		}
 		normalMapKeyWasDown = normalMapKeyDown;
 
+		const bool parallaxKeyDown = glfwGetKey(window.get(), GLFW_KEY_P) == GLFW_PRESS;
+		if (parallaxKeyDown && !parallaxKeyWasDown)
+		{
+			useParallax = !useParallax;
+			std::cout << "Parallax: " << (useParallax ? "on" : "off (raw UVs)")
+				<< std::endl;
+		}
+		parallaxKeyWasDown = parallaxKeyDown;
+
 		camera.Inputs(window.get());
 		camera.UpdateMatrix(fovDegrees, nearPlane, farPlane);
 		glfwSetWindowTitle(window.get(), formatTitle(fps, ms, camera).c_str());
@@ -313,9 +333,12 @@ void run()
 		shaderProgram.Activate();
 		normalMap.Bind();
 		glUniform1i(glGetUniformLocation(shaderProgram.ID, "normal0"), 1);
+		displacementMap.Bind();
+		glUniform1i(glGetUniformLocation(shaderProgram.ID, "displacement0"), 2);
 
 		glUniform1i(glGetUniformLocation(shaderProgram.ID, "useBlinnPhong"), useBlinnPhong);
 		glUniform1i(glGetUniformLocation(shaderProgram.ID, "useNormalMap"), useNormalMap);
+		glUniform1i(glGetUniformLocation(shaderProgram.ID, "useParallax"), useParallax);
 
 		planeMesh.Draw(shaderProgram, camera, glm::mat4(1.0f));
 

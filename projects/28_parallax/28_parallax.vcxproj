@@ -13,8 +13,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{57B1E95D-3153-49D6-9E4F-9131A8ED850E}</ProjectGuid>
-    <RootNamespace>Normals</RootNamespace>
+    <ProjectGuid>{7AD61CFF-ECF7-404D-B45C-0E91F99C1BBF}</ProjectGuid>
+    <RootNamespace>Parallax</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />

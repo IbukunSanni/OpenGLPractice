@@ -3,16 +3,21 @@
 out vec4 FragColor;
 
 in vec2 texCoord;
-in vec3 fragNormal;
-in vec3 fragPos;
+// TANGENT space, all three, courtesy of default.geom. Lighting is done in that
+// space so the sampled normal can be used with no transform of its own.
+in vec3 fragPosTangent;
+in vec3 lightPosTangent;
+in vec3 camPosTangent;
 
 uniform sampler2D diffuse0;
 uniform sampler2D specular0;
+uniform sampler2D normal0;
 uniform vec4 lightColor;
-uniform vec3 lightPos;
-uniform vec3 camPos;
 // Switches the specular model. false falls back to the original Phong.
 uniform bool useBlinnPhong;
+// false falls back to the plane's own flat normal, so the map can be compared
+// against the geometry it is standing in for.
+uniform bool useNormalMap;
 
 // Stands in for bounced light. Lowering it darkens what the light misses, which
 // is what makes the falloff and highlight readable.
@@ -47,7 +52,7 @@ LightingTerms computePhongTerms(vec3 normal, vec3 lightDirection)
 	// view/reflection dot can still go positive and paint an unlit spot.
 	if (lighting.diffuse > 0.0f)
 	{
-		vec3 viewDirection = normalize(camPos - fragPos);
+		vec3 viewDirection = normalize(camPosTangent - fragPosTangent);
 		float specularFactor;
 
 		if (useBlinnPhong)
@@ -88,12 +93,16 @@ vec4 composeLitColor(LightingTerms lighting, float lightIntensity)
 // itself with, so the shadow maps went out with the rest of the old scene.
 vec4 computePointLightColor()
 {
-	vec3 toLight = lightPos - fragPos;
+	vec3 toLight = lightPosTangent - fragPosTangent;
 	float distanceToLight = length(toLight);
 	float intensity = lightStrength * computePointAttenuation(distanceToLight);
 
-	// The one normal the plane has, until a normal map replaces it per fragment.
-	vec3 normal = normalize(fragNormal);
+	// On: a per-fragment normal decoded from the map, [0,1] texel back to a
+	// [-1,1] vector. Off: (0,0,1), which IS the unperturbed surface normal in
+	// tangent space -- no varying needed for it.
+	vec3 normal = useNormalMap
+		? normalize(texture(normal0, texCoord).xyz * 2.0f - 1.0f)
+		: vec3(0.0f, 0.0f, 1.0f);
 	vec3 lightDirection = normalize(toLight);
 	LightingTerms lighting = computePhongTerms(normal, lightDirection);
 
