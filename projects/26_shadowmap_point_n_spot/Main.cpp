@@ -155,10 +155,9 @@ private:
 // ===========================================================================
 
 
-// COMMENTED OUT -- the tutorial has no light marker either. Five sites go with
-// it; search "marker cube". Verbatim from 11_light: drawn unlit, so only
-// position is read and the other Vertex fields just satisfy the struct.
-/*
+// Light marker cube, vertices and indices verbatim from 11_light. It renders
+// unlit through light.frag, so normal, colour and UV are never read -- only
+// position matters, and the struct's other fields are filled to satisfy it.
 Mesh createLightCubeMesh()
 {
 	const glm::vec3 zero(0.0f);
@@ -177,7 +176,6 @@ Mesh createLightCubeMesh()
 	std::vector<Texture> none;
 	return Mesh(vertices, indices, none);
 }
-*/
 
 // Stop before model parsing when a required asset is missing.
 void requireFile(const std::string& path, const char* assetName)
@@ -453,8 +451,8 @@ void run()
 	Shader shaderProgram("default.vert", "default.frag");
 	Shader skyboxShader("skybox.vert", "skybox.frag");
 	Shader framebufferProgram("framebuffer.vert", "framebuffer.frag");
-	// marker cube: unlit, emits lightColor flat with no shading applied to itself.
-	//Shader lightShader("light.vert", "light.frag");
+	// Unlit: emits lightColor flat, with no shading applied to itself.
+	Shader lightShader("light.vert", "light.frag");
 	Shader shadowMapProgram("shadowMap.vert", "shadowMap.frag");
 	// The third argument is a GEOMETRY shader -- the only one in the project. It
 	// is the stage that can emit a triangle per face and route each copy.
@@ -465,16 +463,14 @@ void run()
 	ShaderGuard shaderGuard(shaderProgram);
 	ShaderGuard skyboxGuard(skyboxShader);
 	ShaderGuard framebufferGuard(framebufferProgram);
-	// marker cube
-	//ShaderGuard lightGuard(lightShader);
+	ShaderGuard lightGuard(lightShader);
 	ShaderGuard shadowGuard(shadowMapProgram);
 	ShaderGuard shadowCubeGuard(shadowCubeMapProgram);
 	ShaderGuard shadowDebugGuard(shadowDebugProgram);
 
 
-	// Still live: default.frag multiplies every lit fragment by this. Only the
-	// marker cube's own copy of it is commented out below.
 	const glm::vec4 lightColor(1.0f, 1.0f, 1.0f, 1.0f);
+	// The light lives inside the cube, so the cube reads as its source.
 	const glm::vec3 lightPos = lightPosition;
 
 	shaderProgram.Activate();
@@ -484,9 +480,8 @@ void run()
 	skyboxShader.Activate();
 	glUniform1i(glGetUniformLocation(skyboxShader.ID, "skybox"), 0);
 
-	// marker cube
-	//lightShader.Activate();
-	//glUniform4f(glGetUniformLocation(lightShader.ID, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
+	lightShader.Activate();
+	glUniform4f(glGetUniformLocation(lightShader.ID, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
 
 	framebufferProgram.Activate();
 	glUniform1i(glGetUniformLocation(framebufferProgram.ID, "screenTexture"), 0);
@@ -531,8 +526,7 @@ void run()
 	restPose = glm::scale(restPose, glm::vec3(islandScale));
 	islandModel.ApplyTransform(restPose);
 
-	// marker cube
-	//Mesh lightCube = createLightCubeMesh();
+	Mesh lightCube = createLightCubeMesh();	
 
 	const SkyboxMesh skybox = createSkyboxMesh();
 	const QuadMesh debugQuad = createQuadMesh();
